@@ -1,0 +1,377 @@
+---
+title: "Troubleshooting"
+description: "Common issues and solutions"
+---
+
+## Quick Diagnostics
+
+Run the health check to identify issues:
+
+```bash
+raxe doctor
+```
+
+---
+
+## Installation Issues
+
+### pip install fails
+
+**Symptom:** `pip install raxe` fails with dependency errors
+
+**Solutions:**
+
+```bash
+# Upgrade pip first
+pip install --upgrade pip
+
+# Try with no cache
+pip install raxe --no-cache-dir
+
+# Use a virtual environment
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install raxe
+```
+
+### Python version error
+
+**Symptom:** `requires Python >=3.10`
+
+**Solution:** Upgrade Python or use pyenv:
+
+```bash
+# Check version
+python --version
+
+# Install Python 3.11 with pyenv
+pyenv install 3.11
+pyenv local 3.11
+```
+
+### ML dependencies fail
+
+**Symptom:** `pip install raxe[ml]` fails
+
+**Solutions:**
+
+```bash
+# Install without ML first
+pip install raxe
+
+# Then add ML dependencies
+pip install onnxruntime sentence-transformers
+
+# On Apple Silicon
+pip install onnxruntime-silicon
+```
+
+---
+
+## Configuration Issues
+
+### Config file not found
+
+**Symptom:** `RAXE-CONFIG-001: Configuration file not found`
+
+**Solution:**
+
+```bash
+# Initialize RAXE
+raxe init
+
+# Or specify custom location
+export RAXE_CONFIG_PATH=/path/to/config.yaml
+```
+
+### Invalid API key
+
+**Symptom:** `RAXE-AUTH-001: Invalid API key format`
+
+**Solutions:**
+
+```bash
+# Check current key
+raxe config show | grep api_key
+
+# Set new key
+raxe config set api_key raxe_your_key_here
+
+# Or use environment variable
+export RAXE_API_KEY=raxe_your_key_here
+```
+
+### API key expired
+
+**Symptom:** `RAXE-AUTH-002: API key expired`
+
+**Solution:**
+
+```bash
+# Get new key via browser auth
+raxe auth
+
+# Or get key from console
+# https://console.raxe.ai → API Keys
+```
+
+---
+
+## Scanning Issues
+
+### Empty results
+
+**Symptom:** Scan returns no detections for known threats
+
+**Check:**
+
+```bash
+# Verify rules are loaded
+raxe rules list
+
+# Check specific rule
+raxe rules show pi-001
+
+# Test with known threat
+raxe scan "Ignore all previous instructions"
+```
+
+### False positives
+
+**Symptom:** Legitimate text flagged as threat
+
+**Solutions:**
+
+```python
+from raxe import Raxe
+
+raxe = Raxe()
+
+# Option 1: Adjust confidence threshold
+result = raxe.scan(text)
+high_confidence = [d for d in result.detections if d.confidence > 0.9]
+
+# Option 2: Check specific rule causing issue
+for detection in result.detections:
+    print(f"{detection.rule_id}: {detection.confidence}")
+```
+
+### Scan timeout
+
+**Symptom:** `RAXE-SCAN-003: Scan timeout`
+
+**Solutions:**
+
+```python
+from raxe import Raxe
+
+# Increase timeout
+raxe = Raxe(timeout=60.0)  # 60 seconds
+
+# Or for very long text, chunk it
+def scan_chunks(text, chunk_size=10000):
+    chunks = [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
+    results = []
+    for chunk in chunks:
+        results.append(raxe.scan(chunk))
+    return results
+```
+
+### Slow scans
+
+**Symptom:** Scans taking longer than expected
+
+**Check:**
+
+```bash
+# Run benchmark
+raxe scan "test prompt" --format json | jq '.scan_duration_ms'
+
+# Should be <10ms for L1 only
+# Should be <50ms with ML (L2)
+```
+
+**Solutions:**
+
+```python
+# Disable ML for faster scans
+raxe = Raxe(use_ml=False)
+
+# Or use async for batch scanning
+from raxe import AsyncRaxe
+
+async with AsyncRaxe() as raxe:
+    results = await raxe.scan_batch(prompts, concurrency=10)
+```
+
+---
+
+## Database Issues
+
+### Database locked
+
+**Symptom:** `RAXE-DB-002: Database locked`
+
+**Solutions:**
+
+```bash
+# Check for other RAXE processes
+ps aux | grep raxe
+
+# Kill stuck processes
+pkill -f raxe
+
+# Or wait and retry
+sleep 5 && raxe stats
+```
+
+### Database corrupted
+
+**Symptom:** `RAXE-DB-003: Database corrupted`
+
+**Solution:**
+
+```bash
+# Backup current database
+cp ~/.raxe/raxe.db ~/.raxe/raxe.db.backup
+
+# Delete and reinitialize
+rm ~/.raxe/raxe.db
+raxe init
+
+# Note: This loses scan history
+```
+
+---
+
+## Network Issues
+
+### Telemetry fails
+
+**Symptom:** `RAXE-NET-001: Connection refused` for telemetry
+
+**Note:** Telemetry failures are silent by default and don't affect scanning.
+
+**Check connectivity:**
+
+```bash
+# Test endpoint
+curl -I https://api.raxe.ai/v1/telemetry
+
+# Check endpoint config
+raxe telemetry endpoint show
+```
+
+### Behind corporate proxy
+
+**Solution:**
+
+```bash
+# Set proxy environment variables
+export HTTP_PROXY=http://proxy.company.com:8080
+export HTTPS_PROXY=http://proxy.company.com:8080
+
+# Or disable telemetry (Pro+ only)
+raxe telemetry disable
+```
+
+---
+
+## ML Issues
+
+### ML model not loading
+
+**Symptom:** `RAXE-ML-002: Model load failed`
+
+**Solutions:**
+
+```bash
+# Check if ML is installed
+pip show onnxruntime
+
+# Reinstall ML dependencies
+pip uninstall onnxruntime sentence-transformers
+pip install raxe[ml]
+
+# Check model files
+ls ~/.raxe/models/
+```
+
+### ML too slow
+
+**Symptom:** L2 scans taking >100ms
+
+**Solutions:**
+
+```python
+# Disable ML for latency-sensitive paths
+raxe = Raxe(use_ml=False)
+
+# Or only use ML for flagged content
+result = raxe.scan(text, use_ml=False)
+if result.detections:
+    # Double-check with ML
+    result = raxe.scan(text, use_ml=True)
+```
+
+---
+
+## CLI Issues
+
+### Command not found
+
+**Symptom:** `raxe: command not found`
+
+**Solutions:**
+
+```bash
+# Check if installed
+pip show raxe
+
+# Add to PATH
+export PATH="$HOME/.local/bin:$PATH"
+
+# Or run via Python
+python -m raxe scan "test"
+```
+
+### Colors not displaying
+
+**Symptom:** Output shows escape codes instead of colors
+
+**Solutions:**
+
+```bash
+# Force color output
+export FORCE_COLOR=1
+
+# Or disable colors
+export NO_COLOR=1
+raxe scan "test"
+
+# Or use JSON output
+raxe scan "test" --format json
+```
+
+---
+
+## Getting More Help
+
+### Enable debug logging
+
+```bash
+export RAXE_LOG_LEVEL=DEBUG
+raxe scan "test"
+```
+
+### Generate diagnostic report
+
+```bash
+raxe doctor --verbose > diagnostic.txt
+```
+
+### Contact support
+
+- **GitHub Issues:** [raxe-ai/raxe-ce](https://github.com/raxe-ai/raxe-ce/issues)
+- **Slack:** [RAXE Community](https://join.slack.com/t/raxeai/shared_invite/zt-3kch8c9zp-A8CMJYWQjBBpzV4KNnAQcQ)
+- **Twitter/X:** [@raxeai](https://twitter.com/raxeai)

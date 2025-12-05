@@ -1,0 +1,134 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "RAXE Documentation",
+  "logo": {
+    "dark": "/assets/logo-square.png",
+    "light": "/assets/logo-square.png"
+  },
+  "favicon": "/assets/logo-square.png",
+  "colors": {
+    "primary": "#6366F1",
+    "light": "#22D3EE",
+    "dark": "#8B5CF6",
+    "anchors": {
+      "from": "#22D3EE",
+      "to": "#D946EF"
+    }
+  },
+  "topbarLinks": [
+    {
+      "name": "Community",
+      "url": "https://join.slack.com/t/raxeai/shared_invite/zt-3kch8c9zp-A8CMJYWQjBBpzV4KNnAQcQ"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "GitHub",
+    "url": "https://github.com/raxe-ai/raxe-ce"
+  },
+  "tabs": [
+    {
+      "name": "API Reference",
+      "url": "api-reference"
+    },
+    {
+      "name": "CLI",
+      "url": "cli"
+    }
+  ],
+  "anchors": [
+    {
+      "name": "GitHub",
+      "icon": "github",
+      "url": "https://github.com/raxe-ai/raxe-ce"
+    },
+    {
+      "name": "Slack",
+      "icon": "slack",
+      "url": "https://join.slack.com/t/raxeai/shared_invite/zt-3kch8c9zp-A8CMJYWQjBBpzV4KNnAQcQ"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Getting Started",
+      "pages": [
+        "introduction",
+        "quickstart",
+        "installation",
+        "configuration"
+      ]
+    },
+    {
+      "group": "Core Concepts",
+      "pages": [
+        "concepts/detection-engine",
+        "concepts/threat-families",
+        "concepts/policies",
+        "concepts/architecture"
+      ]
+    },
+    {
+      "group": "SDK",
+      "pages": [
+        "sdk/overview",
+        "sdk/python",
+        "sdk/async",
+        "sdk/openai-wrapper",
+        "sdk/anthropic-wrapper"
+      ]
+    },
+    {
+      "group": "Rules",
+      "pages": [
+        "rules/overview",
+        "rules/custom-rules"
+      ]
+    },
+    {
+      "group": "Integrations",
+      "pages": [
+        "integrations/ci-cd",
+        "integrations/langchain"
+      ]
+    },
+    {
+      "group": "Resources",
+      "pages": [
+        "resources/error-codes",
+        "resources/troubleshooting",
+        "resources/faq"
+      ]
+    },
+    {
+      "group": "API Reference",
+      "pages": [
+        "api-reference/overview",
+        "api-reference/raxe-client",
+        "api-reference/scan-results",
+        "api-reference/exceptions"
+      ]
+    },
+    {
+      "group": "CLI Reference",
+      "pages": [
+        "cli/overview",
+        "cli/commands"
+      ]
+    }
+  ],
+  "footerSocials": {
+    "twitter": "https://twitter.com/raxeai",
+    "github": "https://github.com/raxe-ai",
+    "slack": "https://join.slack.com/t/raxeai/shared_invite/zt-3kch8c9zp-A8CMJYWQjBBpzV4KNnAQcQ"
+  },
+  "modeToggle": {
+    "default": "dark"
+  },
+  "feedback": {
+    "thumbsRating": true,
+    "suggestEdit": true,
+    "raiseIssue": true
+  },
+  "search": {
+    "prompt": "Search RAXE docs..."
+  }
+}

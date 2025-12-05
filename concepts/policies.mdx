@@ -1,0 +1,172 @@
+---
+title: "Policies"
+description: "Configure how RAXE handles detected threats"
+---
+
+## Overview
+
+Policies control what happens when RAXE detects a threat. You can configure actions per rule, family, or severity level.
+
+## Policy Actions
+
+| Action | Behavior | Use Case |
+|--------|----------|----------|
+| `ALLOW` | Monitor only, don't block | Learning mode |
+| `FLAG` | Warn but allow through | Review queue |
+| `BLOCK` | Stop the request | Production security |
+| `LOG` | Silent logging | Analytics only |
+
+## Configuration
+
+Create `~/.raxe/policies.yaml`:
+
+```yaml
+policies:
+  # Block all critical threats
+  - name: "block-critical"
+    action: BLOCK
+    target:
+      severity: CRITICAL
+    priority: 100
+
+  # Flag high-severity prompt injection
+  - name: "flag-pi-high"
+    action: FLAG
+    target:
+      family: PI
+      severity: HIGH
+    priority: 90
+
+  # Allow PII detection in dev mode
+  - name: "allow-pii-dev"
+    action: ALLOW
+    target:
+      family: PII
+    priority: 80
+
+  # Default: log everything else
+  - name: "default-log"
+    action: LOG
+    target:
+      severity: "*"
+    priority: 0
+```
+
+## Targeting Rules
+
+### By Severity
+
+```yaml
+target:
+  severity: CRITICAL  # or HIGH, MEDIUM, LOW
+```
+
+### By Family
+
+```yaml
+target:
+  family: PI  # PI, JB, PII, CMD, ENC, HC, RAG
+```
+
+### By Rule ID
+
+```yaml
+target:
+  rule_id: pi-001
+```
+
+### By Confidence Threshold
+
+```yaml
+target:
+  family: PI
+  min_confidence: 0.9  # Only high-confidence matches
+```
+
+## Priority Resolution
+
+When multiple policies match, the **highest priority wins** (0-1000 scale):
+
+```yaml
+policies:
+  # Priority 100 - specific rule override
+  - name: "allow-specific-rule"
+    action: ALLOW
+    target:
+      rule_id: pii-042
+    priority: 100
+
+  # Priority 50 - family default
+  - name: "block-all-pii"
+    action: BLOCK
+    target:
+      family: PII
+    priority: 50
+```
+
+In this example, `pii-042` is allowed while all other PII rules block.
+
+## Example Configurations
+
+### Learning Mode
+
+```yaml
+# Log everything, block nothing
+policies:
+  - name: "learning-mode"
+    action: LOG
+    target:
+      severity: "*"
+    priority: 100
+```
+
+### Strict Production
+
+```yaml
+policies:
+  # Block critical and high
+  - name: "block-critical"
+    action: BLOCK
+    target:
+      severity: CRITICAL
+    priority: 100
+
+  - name: "block-high"
+    action: BLOCK
+    target:
+      severity: HIGH
+    priority: 90
+
+  # Flag medium
+  - name: "flag-medium"
+    action: FLAG
+    target:
+      severity: MEDIUM
+    priority: 80
+```
+
+## SDK Integration
+
+```python
+from raxe import Raxe
+
+raxe = Raxe()
+result = raxe.scan(user_input)
+
+# Check policy action
+if result.policy_action == "BLOCK":
+    return "Request blocked for security"
+elif result.policy_action == "FLAG":
+    log_for_review(result)
+    return process_with_caution(user_input)
+else:
+    return process_normally(user_input)
+```
+
+## Limits
+
+| Setting | Community | Pro | Enterprise |
+|---------|-----------|-----|------------|
+| Max policies | 100 | 500 | Unlimited |
+| Max priority | 1000 | 1000 | 1000 |
+| Custom rules | 50 | 500 | Unlimited |

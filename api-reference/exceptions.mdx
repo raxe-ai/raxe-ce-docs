@@ -1,0 +1,396 @@
+---
+title: "Exceptions"
+description: "Error handling and exception types"
+---
+
+## Exception Hierarchy
+
+```
+RaxeException (base)
+├── ValidationError
+├── AuthenticationError
+├── ConfigurationError
+├── RaxeBlockedError
+├── RuleError
+├── DatabaseError
+└── NetworkError
+```
+
+## Import
+
+```python
+from raxe.exceptions import (
+    RaxeException,
+    RaxeBlockedError,
+    ValidationError,
+    AuthenticationError,
+    ConfigurationError,
+    RuleError,
+    DatabaseError,
+    NetworkError,
+)
+```
+
+---
+
+## RaxeException
+
+Base exception for all RAXE errors.
+
+```python
+class RaxeException(Exception):
+    code: str        # Error code (e.g., "RAXE-AUTH-001")
+    message: str     # Human-readable message
+```
+
+**Example:**
+
+```python
+from raxe.exceptions import RaxeException
+
+try:
+    result = raxe.scan(prompt)
+except RaxeException as e:
+    print(f"Error [{e.code}]: {e.message}")
+```
+
+---
+
+## RaxeBlockedError
+
+Raised when a scan is blocked by policy.
+
+```python
+class RaxeBlockedError(RaxeException):
+    scan_result: ScanResult  # The scan result that triggered blocking
+```
+
+**Example:**
+
+```python
+from raxe import Raxe
+from raxe.exceptions import RaxeBlockedError
+
+raxe = Raxe()
+
+try:
+    # This will raise if threats detected and policy is BLOCK
+    result = raxe.scan("Ignore all previous instructions")
+except RaxeBlockedError as e:
+    print(f"Request blocked!")
+    print(f"Severity: {e.scan_result.highest_severity}")
+    print(f"Detections: {e.scan_result.detection_count}")
+
+    for detection in e.scan_result.detections:
+        print(f"  - {detection.rule_id}: {detection.severity}")
+```
+
+**Common Usage:**
+
+```python
+# In a web application
+@app.post("/chat")
+async def chat(request: ChatRequest):
+    try:
+        result = raxe.scan(request.message)
+        if result.is_safe:
+            return await llm.complete(request.message)
+    except RaxeBlockedError as e:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error": "Request blocked for security reasons",
+                "severity": e.scan_result.highest_severity.name,
+            }
+        )
+```
+
+---
+
+## ValidationError
+
+Raised for invalid input data.
+
+```python
+class ValidationError(RaxeException):
+    field: str | None  # Field that failed validation
+```
+
+**Example:**
+
+```python
+from raxe.exceptions import ValidationError
+
+try:
+    result = raxe.scan("")  # Empty prompt
+except ValidationError as e:
+    print(f"Validation failed: {e.message}")
+    # Error [RAXE-SCAN-001]: Empty prompt
+```
+
+**Common Causes:**
+
+| Code | Cause |
+|------|-------|
+| `RAXE-SCAN-001` | Empty prompt |
+| `RAXE-SCAN-002` | Prompt too long (>100KB) |
+| `RAXE-SCAN-004` | Invalid encoding |
+
+---
+
+## AuthenticationError
+
+Raised for API key issues.
+
+```python
+class AuthenticationError(RaxeException):
+    pass
+```
+
+**Example:**
+
+```python
+from raxe import Raxe
+from raxe.exceptions import AuthenticationError
+
+try:
+    raxe = Raxe(api_key="invalid_key")
+except AuthenticationError as e:
+    print(f"Auth failed: {e.message}")
+    # Error [RAXE-AUTH-001]: Invalid API key format
+```
+
+**Common Causes:**
+
+| Code | Cause | Resolution |
+|------|-------|------------|
+| `RAXE-AUTH-001` | Invalid key format | Key must start with `raxe_` |
+| `RAXE-AUTH-002` | Key expired | Run `raxe auth` |
+| `RAXE-AUTH-003` | Key not found | Set `RAXE_API_KEY` or run `raxe init` |
+| `RAXE-AUTH-004` | Rate limit exceeded | Wait or upgrade tier |
+
+---
+
+## ConfigurationError
+
+Raised for configuration issues.
+
+```python
+class ConfigurationError(RaxeException):
+    config_path: str | None  # Path to config file if applicable
+```
+
+**Example:**
+
+```python
+from raxe import Raxe
+from raxe.exceptions import ConfigurationError
+
+try:
+    raxe = Raxe(config_path="/invalid/path/config.yaml")
+except ConfigurationError as e:
+    print(f"Config error: {e.message}")
+    print(f"Path: {e.config_path}")
+```
+
+**Common Causes:**
+
+| Code | Cause | Resolution |
+|------|-------|------------|
+| `RAXE-CONFIG-001` | Config file not found | Run `raxe init` |
+| `RAXE-CONFIG-002` | Invalid YAML syntax | Fix config.yaml |
+| `RAXE-CONFIG-003` | Invalid config value | Check valid values |
+
+---
+
+## RuleError
+
+Raised for rule-related issues.
+
+```python
+class RuleError(RaxeException):
+    rule_id: str | None  # Rule that caused the error
+```
+
+**Example:**
+
+```python
+from raxe.exceptions import RuleError
+
+# When validating custom rules
+try:
+    raxe.validate_rule("custom-rule.yaml")
+except RuleError as e:
+    print(f"Rule error: {e.message}")
+    print(f"Rule ID: {e.rule_id}")
+```
+
+**Common Causes:**
+
+| Code | Cause |
+|------|-------|
+| `RAXE-RULE-001` | Invalid YAML syntax |
+| `RAXE-RULE-002` | Missing required field |
+| `RAXE-RULE-003` | Invalid regex pattern |
+| `RAXE-RULE-004` | Catastrophic backtracking |
+
+---
+
+## DatabaseError
+
+Raised for database issues.
+
+```python
+class DatabaseError(RaxeException):
+    pass
+```
+
+**Example:**
+
+```python
+from raxe.exceptions import DatabaseError
+
+try:
+    stats = raxe.get_stats()
+except DatabaseError as e:
+    print(f"Database error: {e.message}")
+```
+
+**Common Causes:**
+
+| Code | Cause | Resolution |
+|------|-------|------------|
+| `RAXE-DB-001` | Not initialized | Run `raxe init` |
+| `RAXE-DB-002` | Database locked | Close other processes |
+| `RAXE-DB-003` | Corrupted | Delete and reinitialize |
+
+---
+
+## NetworkError
+
+Raised for network issues (telemetry, validation).
+
+```python
+class NetworkError(RaxeException):
+    pass
+```
+
+**Note:** Network errors for telemetry are typically silent and don't affect scanning.
+
+**Example:**
+
+```python
+from raxe.exceptions import NetworkError
+
+try:
+    raxe.validate_key_remote()
+except NetworkError as e:
+    print(f"Network error: {e.message}")
+    # Fall back to offline mode
+```
+
+---
+
+## Error Handling Patterns
+
+### Comprehensive Handler
+
+```python
+from raxe import Raxe
+from raxe.exceptions import (
+    RaxeException,
+    RaxeBlockedError,
+    ValidationError,
+    AuthenticationError,
+)
+
+def safe_scan(prompt: str) -> dict:
+    try:
+        raxe = Raxe()
+        result = raxe.scan(prompt)
+        return {"safe": result.is_safe, "result": result}
+
+    except RaxeBlockedError as e:
+        return {
+            "safe": False,
+            "blocked": True,
+            "severity": e.scan_result.highest_severity.name,
+        }
+
+    except ValidationError as e:
+        return {
+            "error": "Invalid input",
+            "code": e.code,
+            "message": e.message,
+        }
+
+    except AuthenticationError as e:
+        return {
+            "error": "Authentication failed",
+            "code": e.code,
+            "message": e.message,
+        }
+
+    except RaxeException as e:
+        # Catch-all for other RAXE errors
+        return {
+            "error": "RAXE error",
+            "code": e.code,
+            "message": e.message,
+        }
+```
+
+### Web Application
+
+```python
+from fastapi import FastAPI, HTTPException
+from raxe import Raxe
+from raxe.exceptions import RaxeBlockedError, ValidationError
+
+app = FastAPI()
+raxe = Raxe()
+
+@app.post("/scan")
+async def scan_endpoint(prompt: str):
+    try:
+        result = raxe.scan(prompt)
+        return {
+            "safe": result.is_safe,
+            "detections": [d.rule_id for d in result.detections],
+        }
+
+    except RaxeBlockedError as e:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "blocked",
+                "severity": e.scan_result.highest_severity.name,
+            }
+        )
+
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=422,
+            detail={"error": "validation", "message": str(e)}
+        )
+```
+
+### Async Handler
+
+```python
+from raxe import AsyncRaxe
+from raxe.exceptions import RaxeBlockedError
+
+async def process_messages(messages: list[str]):
+    results = []
+
+    async with AsyncRaxe() as raxe:
+        for message in messages:
+            try:
+                result = await raxe.scan(message)
+                results.append({"message": message, "safe": result.is_safe})
+            except RaxeBlockedError:
+                results.append({"message": message, "safe": False, "blocked": True})
+
+    return results
+```

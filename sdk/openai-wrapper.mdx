@@ -1,0 +1,159 @@
+---
+title: "OpenAI Wrapper"
+description: "Drop-in replacement for OpenAI client"
+---
+
+## Installation
+
+```bash
+pip install raxe[wrappers]
+```
+
+## Basic Usage
+
+```python
+from raxe import RaxeOpenAI
+
+# Drop-in replacement for OpenAI client
+client = RaxeOpenAI(api_key="sk-...")
+
+# Threats automatically scanned before API call
+response = client.chat.completions.create(
+    model="gpt-4",
+    messages=[{"role": "user", "content": "What is AI?"}]
+)
+
+print(response.choices[0].message.content)
+```
+
+## How It Works
+
+1. User sends request through `RaxeOpenAI`
+2. RAXE scans the prompt **before** calling OpenAI
+3. If threat detected → `RaxeBlockedError` raised
+4. If safe → Request forwarded to OpenAI
+5. Response returned normally
+
+```mermaid
+graph LR
+    A[Your App] --> B[RaxeOpenAI]
+    B --> C{RAXE Scan}
+    C -->|Safe| D[OpenAI API]
+    C -->|Threat| E[RaxeBlockedError]
+    D --> F[Response]
+```
+
+## Benefits
+
+<CardGroup cols={2}>
+  <Card title="Save Money" icon="dollar-sign">
+    Threats blocked before API call - no wasted tokens
+  </Card>
+  <Card title="Zero Code Changes" icon="code">
+    Just change the import statement
+  </Card>
+  <Card title="Full Compatibility" icon="check">
+    All OpenAI features work normally
+  </Card>
+  <Card title="Automatic Protection" icon="shield">
+    Every request scanned automatically
+  </Card>
+</CardGroup>
+
+## Error Handling
+
+```python
+from raxe import RaxeOpenAI, RaxeBlockedError
+
+client = RaxeOpenAI(api_key="sk-...")
+
+try:
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": user_input}]
+    )
+    return response.choices[0].message.content
+
+except RaxeBlockedError as e:
+    # Threat was detected and blocked
+    print(f"Blocked: {e.severity}")
+    print(f"Rule: {e.rule_id}")
+    return "Your request was blocked for security reasons."
+```
+
+## Configuration
+
+```python
+from raxe import RaxeOpenAI
+
+client = RaxeOpenAI(
+    api_key="sk-...",
+
+    # RAXE configuration
+    raxe_l1_enabled=True,
+    raxe_l2_enabled=True,
+    raxe_block_on_threat=True,  # Raise error on threat
+)
+```
+
+## Streaming Support
+
+```python
+from raxe import RaxeOpenAI
+
+client = RaxeOpenAI(api_key="sk-...")
+
+# Streaming works normally
+stream = client.chat.completions.create(
+    model="gpt-4",
+    messages=[{"role": "user", "content": "Tell me a story"}],
+    stream=True
+)
+
+for chunk in stream:
+    if chunk.choices[0].delta.content:
+        print(chunk.choices[0].delta.content, end="")
+```
+
+## All Messages Scanned
+
+The wrapper scans **all messages** in the conversation:
+
+```python
+response = client.chat.completions.create(
+    model="gpt-4",
+    messages=[
+        {"role": "system", "content": "You are helpful"},  # Scanned
+        {"role": "user", "content": "What is AI?"},        # Scanned
+        {"role": "assistant", "content": "AI is..."},      # Scanned
+        {"role": "user", "content": "Tell me more"}        # Scanned
+    ]
+)
+```
+
+## Migration Guide
+
+```python
+# Before
+from openai import OpenAI
+client = OpenAI(api_key="sk-...")
+
+# After (one-line change)
+from raxe import RaxeOpenAI
+client = RaxeOpenAI(api_key="sk-...")
+
+# Everything else stays the same!
+```
+
+## Async Support
+
+```python
+from raxe import AsyncRaxeOpenAI
+
+client = AsyncRaxeOpenAI(api_key="sk-...")
+
+response = await client.chat.completions.create(
+    model="gpt-4",
+    messages=[{"role": "user", "content": "Hello"}]
+)
+```

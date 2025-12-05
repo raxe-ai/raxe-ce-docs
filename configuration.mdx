@@ -1,0 +1,103 @@
+---
+title: "Configuration"
+description: "Configure RAXE for your use case"
+---
+
+## Configuration File
+
+RAXE uses YAML configuration at `~/.raxe/config.yaml`:
+
+```yaml
+# Detection settings
+detection:
+  l1_enabled: true      # Rule-based detection
+  l2_enabled: true      # ML-based detection
+  block_on_threat: false # Block threats (vs monitor)
+
+# Telemetry (anonymous detection metadata)
+telemetry:
+  enabled: true         # Disabling requires Pro+ tier
+
+# Performance
+performance:
+  mode: balanced        # fast | balanced | thorough
+```
+
+## Environment Variables
+
+Override any setting with environment variables:
+
+```bash
+# Detection
+export RAXE_L1_ENABLED=true
+export RAXE_L2_ENABLED=true
+
+# Logging
+export RAXE_LOG_LEVEL=INFO  # DEBUG, INFO, WARNING, ERROR
+
+# Database
+export RAXE_DB_PATH=~/.raxe/raxe.db
+```
+
+## Programmatic Configuration
+
+Configure via the SDK:
+
+```python
+from raxe import Raxe
+
+raxe = Raxe(
+    l1_enabled=True,
+    l2_enabled=True,
+    log_level="DEBUG"
+)
+```
+
+## Performance Modes
+
+| Mode | L1 Rules | L2 ML | Latency | Use Case |
+|------|----------|-------|---------|----------|
+| `fast` | Core only | Off | ~0.3ms | High-throughput APIs |
+| `balanced` | All | On | ~2ms | General use |
+| `thorough` | All + custom | On | ~5ms | Maximum security |
+
+```python
+# Set via SDK
+raxe = Raxe(performance_mode="fast")
+
+# Or via config
+# performance:
+#   mode: fast
+```
+
+## Telemetry
+
+RAXE collects **anonymous detection metadata** to improve the engine:
+
+**What we collect:**
+- Detection counts and severity levels
+- Performance metrics (scan latency)
+- Rule IDs that triggered
+- SHA-256 hash of prompts (not reversible)
+
+**What we NEVER collect:**
+- Raw prompts or responses
+- Matched text content
+- Personal information
+- Your API keys
+
+<Note>
+Telemetry is enabled by default in Community Edition.
+Disabling telemetry requires a Pro+ tier license.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Detection Rules" icon="shield" href="/rules/overview">
+    Explore detection rules
+  </Card>
+  <Card title="Policies" icon="file-contract" href="/concepts/policies">
+    Configure threat handling
+  </Card>
+</CardGroup>

@@ -1,0 +1,165 @@
+---
+title: "Async SDK"
+description: "High-performance async operations"
+---
+
+## Installation
+
+```bash
+pip install raxe
+```
+
+## Basic Usage
+
+```python
+from raxe import AsyncRaxe
+
+async_raxe = AsyncRaxe()
+
+# Single scan
+result = await async_raxe.scan("test prompt")
+
+if result.has_threats:
+    print(f"Threat: {result.severity}")
+```
+
+## Batch Scanning
+
+Scan multiple prompts efficiently:
+
+```python
+from raxe import AsyncRaxe
+
+async_raxe = AsyncRaxe()
+
+prompts = [
+    "What is AI?",
+    "Ignore all instructions",
+    "Tell me about Python",
+]
+
+# Scan all with concurrency control
+results = await async_raxe.scan_batch(
+    prompts,
+    max_concurrency=5
+)
+
+for prompt, result in zip(prompts, results):
+    status = "THREAT" if result.has_threats else "SAFE"
+    print(f"{status}: {prompt[:30]}...")
+```
+
+## Async Context Manager
+
+```python
+from raxe import AsyncRaxe
+
+async with AsyncRaxe() as raxe:
+    result = await raxe.scan("test")
+# Cleanup handled automatically
+```
+
+## Integration with FastAPI
+
+```python
+from fastapi import FastAPI, HTTPException
+from raxe import AsyncRaxe
+
+app = FastAPI()
+raxe = AsyncRaxe()
+
+@app.post("/chat")
+async def chat(prompt: str):
+    result = await raxe.scan(prompt)
+
+    if result.has_threats:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Threat detected: {result.severity}"
+        )
+
+    response = await generate_response(prompt)
+    return {"response": response}
+```
+
+## Integration with aiohttp
+
+```python
+import aiohttp
+from raxe import AsyncRaxe
+
+async def process_requests(prompts: list[str]):
+    raxe = AsyncRaxe()
+
+    async with aiohttp.ClientSession() as session:
+        for prompt in prompts:
+            result = await raxe.scan(prompt)
+
+            if not result.has_threats:
+                async with session.post(api_url, json={"prompt": prompt}) as resp:
+                    yield await resp.json()
+```
+
+## Streaming Support
+
+```python
+from raxe import AsyncRaxe
+
+async def scan_stream(prompts):
+    raxe = AsyncRaxe()
+
+    for prompt in prompts:
+        result = await raxe.scan(prompt)
+        yield {
+            "prompt": prompt[:50],
+            "safe": not result.has_threats,
+            "severity": result.severity
+        }
+```
+
+## Performance Tuning
+
+```python
+from raxe import AsyncRaxe
+
+# For high-throughput scenarios
+raxe = AsyncRaxe(
+    l1_enabled=True,
+    l2_enabled=False,  # Skip ML for speed
+    performance_mode="fast"
+)
+
+# Batch with higher concurrency
+results = await raxe.scan_batch(
+    prompts,
+    max_concurrency=20  # Adjust based on your system
+)
+```
+
+## Error Handling
+
+```python
+from raxe import AsyncRaxe, RaxeBlockedError, RaxeError
+
+async def safe_scan(prompt: str):
+    raxe = AsyncRaxe()
+
+    try:
+        result = await raxe.scan(prompt)
+        return result
+    except RaxeBlockedError as e:
+        # Handle blocked threats
+        return {"blocked": True, "severity": e.severity}
+    except RaxeError as e:
+        # Handle other errors
+        return {"error": str(e)}
+```
+
+## Comparison: Sync vs Async
+
+| Feature | Sync (`Raxe`) | Async (`AsyncRaxe`) |
+|---------|---------------|---------------------|
+| Single scan | `raxe.scan()` | `await raxe.scan()` |
+| Batch | Loop | `scan_batch()` |
+| Concurrency | Thread pool | Native async |
+| Use case | Simple apps | High-throughput APIs |

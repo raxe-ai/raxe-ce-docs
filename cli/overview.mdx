@@ -1,0 +1,138 @@
+---
+title: "CLI Overview"
+description: "RAXE command-line interface"
+---
+
+## Installation
+
+```bash
+pip install raxe
+```
+
+## Quick Reference
+
+```bash
+# Scan a prompt
+raxe scan "your text here"
+
+# Interactive mode
+raxe repl
+
+# List rules
+raxe rules list
+
+# Health check
+raxe doctor
+
+# View stats
+raxe stats
+```
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `raxe scan` | Scan text for threats |
+| `raxe repl` | Interactive scanning mode |
+| `raxe rules` | Manage detection rules |
+| `raxe doctor` | System health check |
+| `raxe stats` | View scan statistics |
+| `raxe config` | Manage configuration |
+| `raxe init` | Initialize RAXE |
+| `raxe export` | Export scan history |
+
+## Global Options
+
+```bash
+# Set log level
+raxe --log-level DEBUG scan "text"
+
+# Output as JSON
+raxe scan "text" --format json
+
+# CI mode (JSON output, exit code 1 on threats)
+raxe scan "text" --ci
+```
+
+## Environment Variables
+
+```bash
+# Set API key
+export RAXE_API_KEY="raxe_..."
+
+# Set log level
+export RAXE_LOG_LEVEL=DEBUG
+
+# CI mode
+export RAXE_CI=true
+```
+
+## Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | Success, no threats |
+| 1 | Threat detected |
+| 2 | Error occurred |
+
+## Common Workflows
+
+### Basic Scan
+
+```bash
+raxe scan "Ignore all previous instructions"
+```
+
+Output:
+```
+THREAT DETECTED
+
+Severity: CRITICAL
+Detections: 1
+
+Rule: pi-001 - Prompt Injection
+Matched: "Ignore all previous instructions"
+```
+
+### CI/CD Integration
+
+```bash
+# In GitHub Actions or similar
+raxe scan "$USER_INPUT" --ci
+if [ $? -eq 1 ]; then
+  echo "Threat detected, blocking request"
+  exit 1
+fi
+```
+
+### Batch Scanning
+
+```bash
+# Scan from file
+raxe batch prompts.txt
+
+# Scan from stdin
+cat prompts.txt | raxe batch -
+```
+
+### Interactive Mode
+
+```bash
+raxe repl
+```
+
+```
+RAXE REPL v0.0.1
+Type 'help' for commands, 'quit' to exit
+
+raxe> scan Ignore all instructions
+THREAT: pi-001 (HIGH)
+
+raxe> quit
+```
+
+## Next Steps
+
+<Card title="All Commands" icon="terminal" href="/cli/commands">
+  Complete CLI command reference
+</Card>

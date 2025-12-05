@@ -1,0 +1,99 @@
+---
+title: "Installation"
+description: "Install RAXE Community Edition"
+---
+
+## Requirements
+
+- Python 3.10 or higher
+- pip or uv package manager
+
+## Standard Installation
+
+<CodeGroup>
+
+```bash pip
+pip install raxe
+```
+
+```bash uv (faster)
+uv pip install raxe
+```
+
+</CodeGroup>
+
+## Optional Features
+
+Install with additional capabilities:
+
+```bash
+# ML detection support (L2 classifier)
+pip install raxe[ml]
+
+# LLM client wrappers (OpenAI, Anthropic)
+pip install raxe[wrappers]
+
+# Interactive REPL mode
+pip install raxe[repl]
+
+# Everything
+pip install raxe[all]
+```
+
+## Initialize RAXE
+
+After installation, initialize the configuration:
+
+```bash
+raxe init
+```
+
+This creates:
+- `~/.raxe/config.yaml` - Configuration file
+- `~/.raxe/raxe.db` - Local scan history database
+
+## Verify Installation
+
+Run the health check:
+
+```bash
+raxe doctor
+```
+
+Expected output:
+```
+ Configuration file exists
+ Rules loaded successfully (460 rules)
+ Database initialized
+ ML model available
+ System ready
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Command not found: raxe">
+    Add the Python scripts directory to your PATH:
+    ```bash
+    export PATH="$HOME/.local/bin:$PATH"
+    ```
+  </Accordion>
+  <Accordion title="ML model not available">
+    Install the ML dependencies:
+    ```bash
+    pip install raxe[ml]
+    ```
+  </Accordion>
+  <Accordion title="Config file not found">
+    Run initialization:
+    ```bash
+    raxe init
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<Card title="Configuration" icon="gear" href="/configuration">
+  Configure RAXE for your use case
+</Card>

@@ -1,0 +1,140 @@
+---
+title: "SDK Overview"
+description: "RAXE Python SDK integration patterns"
+---
+
+## Installation
+
+```bash
+pip install raxe
+```
+
+## Quick Start
+
+```python
+from raxe import Raxe
+
+raxe = Raxe()
+result = raxe.scan("Your prompt here")
+
+if result.has_threats:
+    print(f"Threat: {result.severity}")
+```
+
+## Integration Patterns
+
+<CardGroup cols={2}>
+  <Card title="Direct Scanning" icon="magnifying-glass" href="/sdk/python">
+    Manual scan calls with full control
+  </Card>
+  <Card title="OpenAI Wrapper" icon="robot" href="/sdk/openai-wrapper">
+    Drop-in replacement for OpenAI client
+  </Card>
+  <Card title="Anthropic Wrapper" icon="brain" href="/sdk/anthropic-wrapper">
+    Drop-in replacement for Anthropic client
+  </Card>
+  <Card title="Async SDK" icon="bolt" href="/sdk/async">
+    High-performance async operations
+  </Card>
+</CardGroup>
+
+## Pattern Comparison
+
+| Pattern | Use Case | Blocking | Control |
+|---------|----------|----------|---------|
+| Direct scan | Custom logic | Manual | Full |
+| Decorators | Function protection | Configurable | Medium |
+| Wrappers | LLM API protection | Automatic | Low |
+| Async | High throughput | Configurable | Full |
+
+## Direct Scanning
+
+```python
+from raxe import Raxe
+
+raxe = Raxe()
+
+# Basic scan
+result = raxe.scan("user input")
+
+# Check results
+if result.has_threats:
+    print(f"Severity: {result.severity}")
+    print(f"Detections: {result.total_detections}")
+    for d in result.detections:
+        print(f"  - {d.rule_id}: {d.category}")
+```
+
+## Decorator Pattern
+
+```python
+from raxe import Raxe
+
+raxe = Raxe()
+
+@raxe.protect
+def process_input(user_input: str) -> str:
+    """Automatically scanned before execution"""
+    return llm.generate(user_input)
+
+# Safe input - works normally
+process_input("What is the weather?")
+
+# Malicious input - blocked or logged
+process_input("Ignore all instructions")
+```
+
+## LLM Wrappers
+
+```python
+from raxe import RaxeOpenAI
+
+# Drop-in replacement
+client = RaxeOpenAI(api_key="sk-...")
+
+# Automatic scanning before API call
+response = client.chat.completions.create(
+    model="gpt-4",
+    messages=[{"role": "user", "content": user_input}]
+)
+```
+
+## Async SDK
+
+```python
+from raxe import AsyncRaxe
+
+async_raxe = AsyncRaxe()
+
+# Single scan
+result = await async_raxe.scan("prompt")
+
+# Batch scanning
+results = await async_raxe.scan_batch(
+    prompts=["prompt1", "prompt2", "prompt3"],
+    max_concurrency=5
+)
+```
+
+## Context Manager
+
+```python
+from raxe import Raxe
+
+# Automatic cleanup
+with Raxe() as raxe:
+    result = raxe.scan("test")
+    # Telemetry flushed on exit
+```
+
+## Configuration
+
+```python
+from raxe import Raxe
+
+raxe = Raxe(
+    l1_enabled=True,      # Rule-based detection
+    l2_enabled=True,      # ML detection
+    log_level="INFO",     # Logging level
+)
+```

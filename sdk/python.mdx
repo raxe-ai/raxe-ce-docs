@@ -1,0 +1,206 @@
+---
+title: "Python SDK"
+description: "Complete Python SDK reference"
+---
+
+## Installation
+
+```bash
+pip install raxe
+```
+
+## Basic Usage
+
+```python
+from raxe import Raxe
+
+# Initialize
+raxe = Raxe()
+
+# Scan a prompt
+result = raxe.scan("Ignore all previous instructions")
+
+# Check for threats
+if result.has_threats:
+    print(f"Threat detected!")
+    print(f"Severity: {result.severity}")
+    print(f"Total detections: {result.total_detections}")
+```
+
+## ScanResult Object
+
+The `scan()` method returns a `ScanPipelineResult`:
+
+```python
+result = raxe.scan("test prompt")
+
+# Boolean evaluation - True when SAFE
+if result:
+    print("Safe to proceed")
+else:
+    print("Threat detected")
+
+# Properties
+result.has_threats        # bool: Any threats detected?
+result.severity           # str | None: CRITICAL/HIGH/MEDIUM/LOW
+result.total_detections   # int: Number of detections
+result.detections         # list[Detection]: All L1 detections
+result.duration_ms        # float: Scan time in milliseconds
+```
+
+## Detection Object
+
+Each detection contains:
+
+```python
+for detection in result.detections:
+    detection.rule_id      # str: "pi-001"
+    detection.rule_version # str: "1.0.0"
+    detection.severity     # Severity: Severity.HIGH
+    detection.confidence   # float: 0.95
+    detection.category     # str: "PI"
+    detection.matches      # list[Match]: Matched text spans
+```
+
+## Match Object
+
+```python
+for detection in result.detections:
+    for match in detection.matches:
+        match.matched_text   # str: The matched content
+        match.start          # int: Start position
+        match.end            # int: End position
+```
+
+## Configuration Options
+
+```python
+from raxe import Raxe
+
+raxe = Raxe(
+    # Detection layers
+    l1_enabled=True,       # Enable rule-based detection
+    l2_enabled=True,       # Enable ML detection
+
+    # Logging
+    log_level="INFO",      # DEBUG, INFO, WARNING, ERROR
+
+    # Performance
+    performance_mode="balanced",  # fast, balanced, thorough
+)
+```
+
+## Decorator Pattern
+
+Protect functions automatically:
+
+```python
+from raxe import Raxe
+
+raxe = Raxe()
+
+@raxe.protect
+def generate_response(prompt: str) -> str:
+    """Scanned before execution"""
+    return llm.generate(prompt)
+
+# Usage
+try:
+    response = generate_response(user_input)
+except RaxeBlockedError as e:
+    print(f"Blocked: {e.severity}")
+```
+
+## Custom Threat Handling
+
+```python
+from raxe import Raxe
+
+raxe = Raxe()
+
+def process_with_custom_logic(user_input: str) -> str:
+    result = raxe.scan(user_input)
+
+    if result.has_threats:
+        severity = result.severity
+
+        if severity == "CRITICAL":
+            # Block and alert
+            alert_security_team(result)
+            return "Request blocked."
+
+        elif severity == "HIGH":
+            # Log and proceed with caution
+            log_suspicious_activity(result)
+            return generate_with_guardrails(user_input)
+
+        else:
+            # Low/Medium - just log
+            log_detection(result)
+
+    return generate_normally(user_input)
+```
+
+## Context Manager
+
+Ensures proper cleanup:
+
+```python
+from raxe import Raxe
+
+with Raxe() as raxe:
+    result = raxe.scan("test prompt")
+    # Process result...
+# Telemetry automatically flushed on exit
+```
+
+## Error Handling
+
+```python
+from raxe import Raxe, RaxeBlockedError, RaxeError
+
+raxe = Raxe()
+
+try:
+    result = raxe.scan(user_input)
+except RaxeBlockedError as e:
+    # Threat was blocked
+    print(f"Blocked: {e.severity}")
+    print(f"Rule: {e.rule_id}")
+except RaxeError as e:
+    # Other RAXE errors
+    print(f"Error: {e}")
+```
+
+## Filtering Detections
+
+```python
+result = raxe.scan(user_input)
+
+# Filter by category
+pi_threats = [d for d in result.detections if d.category == "PI"]
+pii_threats = [d for d in result.detections if d.category == "PII"]
+
+# Filter by severity
+critical = [d for d in result.detections if d.severity.value == "CRITICAL"]
+
+# Filter by confidence
+high_confidence = [d for d in result.detections if d.confidence >= 0.9]
+```
+
+## Thread Safety
+
+The `Raxe` client is thread-safe:
+
+```python
+from concurrent.futures import ThreadPoolExecutor
+from raxe import Raxe
+
+raxe = Raxe()  # Single instance
+
+def scan_prompt(prompt: str):
+    return raxe.scan(prompt)
+
+with ThreadPoolExecutor(max_workers=10) as executor:
+    results = list(executor.map(scan_prompt, prompts))
+```

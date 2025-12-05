@@ -1,0 +1,195 @@
+---
+title: "Error Codes"
+description: "RAXE error codes and resolution"
+---
+
+## Overview
+
+RAXE uses structured error codes to help you diagnose and resolve issues quickly.
+
+## Error Code Format
+
+```
+RAXE-{CATEGORY}-{NUMBER}
+```
+
+- **Category**: Component area (AUTH, SCAN, RULE, CONFIG, etc.)
+- **Number**: Specific error within category
+
+---
+
+## Authentication Errors (AUTH)
+
+| Code | Message | Resolution |
+|------|---------|------------|
+| `RAXE-AUTH-001` | Invalid API key format | Ensure key starts with `raxe_` |
+| `RAXE-AUTH-002` | API key expired | Run `raxe auth` to get new key |
+| `RAXE-AUTH-003` | API key not found | Run `raxe init` or set `RAXE_API_KEY` |
+| `RAXE-AUTH-004` | Rate limit exceeded | Wait or upgrade to Pro tier |
+| `RAXE-AUTH-005` | Key validation failed | Check network connectivity |
+
+### Example
+
+```python
+from raxe import Raxe
+from raxe.exceptions import AuthenticationError
+
+try:
+    raxe = Raxe(api_key="invalid")
+except AuthenticationError as e:
+    print(f"Auth failed: {e.code}")  # RAXE-AUTH-001
+```
+
+---
+
+## Scan Errors (SCAN)
+
+| Code | Message | Resolution |
+|------|---------|------------|
+| `RAXE-SCAN-001` | Empty prompt | Provide non-empty text to scan |
+| `RAXE-SCAN-002` | Prompt too long | Reduce prompt to <100KB |
+| `RAXE-SCAN-003` | Scan timeout | Increase timeout or simplify prompt |
+| `RAXE-SCAN-004` | Invalid encoding | Ensure UTF-8 encoded text |
+| `RAXE-SCAN-005` | Scan blocked by policy | Check policy configuration |
+
+### Example
+
+```python
+from raxe import Raxe
+from raxe.exceptions import ValidationError
+
+raxe = Raxe()
+
+try:
+    result = raxe.scan("")  # Empty prompt
+except ValidationError as e:
+    print(f"Error: {e.code}")  # RAXE-SCAN-001
+```
+
+---
+
+## Rule Errors (RULE)
+
+| Code | Message | Resolution |
+|------|---------|------------|
+| `RAXE-RULE-001` | Invalid rule YAML | Fix YAML syntax |
+| `RAXE-RULE-002` | Missing required field | Add required field to rule |
+| `RAXE-RULE-003` | Invalid regex pattern | Fix regex syntax |
+| `RAXE-RULE-004` | Catastrophic backtracking | Simplify regex pattern |
+| `RAXE-RULE-005` | Rule ID conflict | Use unique rule_id |
+| `RAXE-RULE-006` | Rule not found | Check rule_id exists |
+
+### Example
+
+```bash
+$ raxe validate-rule my-rule.yaml
+
+Error: RAXE-RULE-002
+Missing required field: 'severity'
+
+Add severity field:
+  severity: "HIGH"  # CRITICAL, HIGH, MEDIUM, or LOW
+```
+
+---
+
+## Configuration Errors (CONFIG)
+
+| Code | Message | Resolution |
+|------|---------|------------|
+| `RAXE-CONFIG-001` | Config file not found | Run `raxe init` |
+| `RAXE-CONFIG-002` | Invalid YAML syntax | Fix config.yaml syntax |
+| `RAXE-CONFIG-003` | Invalid config value | Check valid values in docs |
+| `RAXE-CONFIG-004` | Permission denied | Check file permissions |
+| `RAXE-CONFIG-005` | Config version mismatch | Run `raxe init --upgrade` |
+
+### Example
+
+```bash
+$ raxe scan "test"
+
+Error: RAXE-CONFIG-001
+Configuration file not found at ~/.raxe/config.yaml
+
+Run: raxe init
+```
+
+---
+
+## Database Errors (DB)
+
+| Code | Message | Resolution |
+|------|---------|------------|
+| `RAXE-DB-001` | Database not initialized | Run `raxe init` |
+| `RAXE-DB-002` | Database locked | Close other RAXE processes |
+| `RAXE-DB-003` | Database corrupted | Delete and reinitialize |
+| `RAXE-DB-004` | Migration failed | Check disk space, permissions |
+
+### Example
+
+```bash
+$ raxe stats
+
+Error: RAXE-DB-001
+Database not initialized
+
+Run: raxe init
+```
+
+---
+
+## Network Errors (NET)
+
+| Code | Message | Resolution |
+|------|---------|------------|
+| `RAXE-NET-001` | Connection refused | Check network/firewall |
+| `RAXE-NET-002` | Connection timeout | Retry or check connectivity |
+| `RAXE-NET-003` | SSL/TLS error | Update certificates |
+| `RAXE-NET-004` | DNS resolution failed | Check DNS settings |
+
+---
+
+## ML Errors (ML)
+
+| Code | Message | Resolution |
+|------|---------|------------|
+| `RAXE-ML-001` | Model not found | Run `pip install raxe[ml]` |
+| `RAXE-ML-002` | Model load failed | Check model file integrity |
+| `RAXE-ML-003` | Inference failed | Check input format |
+| `RAXE-ML-004` | ONNX runtime error | Reinstall onnxruntime |
+
+### Example
+
+```python
+from raxe import Raxe
+
+raxe = Raxe(use_ml=True)  # ML not installed
+
+# Warning: RAXE-ML-001
+# ML detection disabled. Install with: pip install raxe[ml]
+```
+
+---
+
+## CLI Exit Codes
+
+| Code | Meaning | Example |
+|------|---------|---------|
+| `0` | Success, no threats | Clean scan |
+| `1` | Threat detected | Scan found issues |
+| `2` | Error occurred | Configuration error |
+
+```bash
+raxe scan "text" --ci
+echo $?  # 0 = safe, 1 = threat, 2 = error
+```
+
+---
+
+## Getting Help
+
+If you encounter an error not listed here:
+
+1. Check the [troubleshooting guide](/resources/troubleshooting)
+2. Search [GitHub Issues](https://github.com/raxe-ai/raxe-ce/issues)
+3. Ask in [Slack](https://join.slack.com/t/raxeai/shared_invite/zt-3kch8c9zp-A8CMJYWQjBBpzV4KNnAQcQ)

@@ -1,0 +1,99 @@
+---
+title: "API Reference Overview"
+description: "Complete API documentation"
+---
+
+## SDK Components
+
+RAXE provides a comprehensive Python SDK with the following components:
+
+<CardGroup cols={2}>
+  <Card title="Raxe Client" icon="code" href="/api-reference/raxe-client">
+    Core scanning client for sync operations
+  </Card>
+  <Card title="AsyncRaxe Client" icon="bolt" href="/api-reference/raxe-client#asyncraxe">
+    Async client for high-throughput scanning
+  </Card>
+  <Card title="Scan Results" icon="magnifying-glass" href="/api-reference/scan-results">
+    Result objects and detection models
+  </Card>
+  <Card title="Exceptions" icon="triangle-exclamation" href="/api-reference/exceptions">
+    Error handling and exception types
+  </Card>
+</CardGroup>
+
+## Quick Import Reference
+
+```python
+# Core clients
+from raxe import Raxe, AsyncRaxe
+
+# LLM wrappers
+from raxe.sdk.wrappers import RaxeOpenAI, RaxeAnthropic
+
+# Types and models
+from raxe.domain.rules.models import Detection, Severity
+from raxe.application.scan_result import ScanResult
+
+# Exceptions
+from raxe.exceptions import (
+    RaxeException,
+    RaxeBlockedError,
+    ValidationError,
+    AuthenticationError,
+    ConfigurationError,
+)
+
+# LangChain integration
+from raxe.sdk.integrations.langchain import RaxeCallbackHandler
+```
+
+## Basic Usage Pattern
+
+```python
+from raxe import Raxe
+
+# Initialize client
+raxe = Raxe()
+
+# Scan a prompt
+result = raxe.scan("user input here")
+
+# Check result
+if result.is_safe:
+    # Proceed with LLM call
+    pass
+else:
+    # Handle threat
+    print(f"Threat: {result.highest_severity}")
+    for detection in result.detections:
+        print(f"  - {detection.rule_id}: {detection.severity}")
+```
+
+## Type Annotations
+
+RAXE is fully typed for IDE support:
+
+```python
+from raxe import Raxe
+from raxe.application.scan_result import ScanResult
+from raxe.domain.rules.models import Detection
+
+def process_input(user_input: str) -> bool:
+    raxe: Raxe = Raxe()
+    result: ScanResult = raxe.scan(user_input)
+    detections: list[Detection] = result.detections
+    return result.is_safe
+```
+
+## API Stability
+
+| Component | Stability | Notes |
+|-----------|-----------|-------|
+| `Raxe` | Stable | Core API |
+| `AsyncRaxe` | Stable | Async API |
+| `ScanResult` | Stable | Result model |
+| `Detection` | Stable | Detection model |
+| `RaxeOpenAI` | Stable | OpenAI wrapper |
+| `RaxeAnthropic` | Stable | Anthropic wrapper |
+| `RaxeCallbackHandler` | Beta | LangChain integration |

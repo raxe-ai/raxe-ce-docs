@@ -1,0 +1,130 @@
+---
+title: "Anthropic Wrapper"
+description: "Drop-in replacement for Anthropic client"
+---
+
+## Installation
+
+```bash
+pip install raxe[wrappers]
+```
+
+## Basic Usage
+
+```python
+from raxe import RaxeAnthropic
+
+# Drop-in replacement for Anthropic client
+client = RaxeAnthropic(api_key="sk-ant-...")
+
+# Threats automatically scanned before API call
+response = client.messages.create(
+    model="claude-3-5-sonnet-20241022",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": "What is AI?"}]
+)
+
+print(response.content[0].text)
+```
+
+## How It Works
+
+1. User sends request through `RaxeAnthropic`
+2. RAXE scans the prompt **before** calling Anthropic
+3. If threat detected → `RaxeBlockedError` raised
+4. If safe → Request forwarded to Anthropic
+5. Response returned normally
+
+## Error Handling
+
+```python
+from raxe import RaxeAnthropic, RaxeBlockedError
+
+client = RaxeAnthropic(api_key="sk-ant-...")
+
+try:
+    response = client.messages.create(
+        model="claude-3-5-sonnet-20241022",
+        max_tokens=1024,
+        messages=[{"role": "user", "content": user_input}]
+    )
+    return response.content[0].text
+
+except RaxeBlockedError as e:
+    print(f"Blocked: {e.severity}")
+    return "Your request was blocked for security reasons."
+```
+
+## Configuration
+
+```python
+from raxe import RaxeAnthropic
+
+client = RaxeAnthropic(
+    api_key="sk-ant-...",
+
+    # RAXE configuration
+    raxe_l1_enabled=True,
+    raxe_l2_enabled=True,
+    raxe_block_on_threat=True,
+)
+```
+
+## Streaming Support
+
+```python
+from raxe import RaxeAnthropic
+
+client = RaxeAnthropic(api_key="sk-ant-...")
+
+with client.messages.stream(
+    model="claude-3-5-sonnet-20241022",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": "Tell me a story"}]
+) as stream:
+    for text in stream.text_stream:
+        print(text, end="")
+```
+
+## System Prompts
+
+System prompts are also scanned:
+
+```python
+response = client.messages.create(
+    model="claude-3-5-sonnet-20241022",
+    max_tokens=1024,
+    system="You are a helpful assistant",  # Scanned
+    messages=[
+        {"role": "user", "content": "Hello"}  # Scanned
+    ]
+)
+```
+
+## Migration Guide
+
+```python
+# Before
+from anthropic import Anthropic
+client = Anthropic(api_key="sk-ant-...")
+
+# After (one-line change)
+from raxe import RaxeAnthropic
+client = RaxeAnthropic(api_key="sk-ant-...")
+
+# Everything else stays the same!
+```
+
+## Async Support
+
+```python
+from raxe import AsyncRaxeAnthropic
+
+client = AsyncRaxeAnthropic(api_key="sk-ant-...")
+
+response = await client.messages.create(
+    model="claude-3-5-sonnet-20241022",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": "Hello"}]
+)
+```

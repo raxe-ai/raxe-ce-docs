@@ -1,0 +1,171 @@
+---
+title: "Custom Rules"
+description: "Create your own detection rules"
+---
+
+## Overview
+
+RAXE allows you to create custom detection rules to catch threats specific to your application.
+
+## Rule Location
+
+Custom rules go in `~/.raxe/rules/`:
+
+```
+~/.raxe/
+├── config.yaml
+├── rules/
+│   ├── my-rule-001.yaml
+│   └── my-rule-002.yaml
+```
+
+## Rule Format
+
+```yaml
+rule_id: "custom-001"
+version: "1.0.0"
+family: "PI"
+sub_family: "custom"
+name: "My Custom Detection"
+description: "Detects specific threat pattern for my app"
+severity: "HIGH"
+confidence: 0.90
+
+patterns:
+  - pattern: "(?i)\\bmy\\s+specific\\s+pattern\\b"
+    flags: ["IGNORECASE"]
+
+examples:
+  positive:
+    - "my specific pattern here"
+    - "MY SPECIFIC PATTERN"
+  negative:
+    - "not matching text"
+    - "my other pattern"
+
+metadata:
+  author: "your-name"
+  created: "2025-01-01"
+  tags: ["custom", "my-app"]
+```
+
+## Required Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `rule_id` | string | Unique ID (e.g., `custom-001`) |
+| `version` | string | Semantic version |
+| `family` | string | PI, JB, PII, CMD, ENC, HC, RAG |
+| `name` | string | Human-readable name |
+| `severity` | string | CRITICAL, HIGH, MEDIUM, LOW |
+| `confidence` | float | 0.0 - 1.0 |
+| `patterns` | list | Regex patterns to match |
+
+## Pattern Syntax
+
+Patterns use Python regex syntax:
+
+```yaml
+patterns:
+  # Case-insensitive match
+  - pattern: "(?i)ignore.*instructions"
+    flags: ["IGNORECASE"]
+
+  # Word boundaries
+  - pattern: "\\bsecret\\b"
+
+  # Multiple alternatives
+  - pattern: "(password|token|api.?key)"
+
+  # Negative lookahead
+  - pattern: "reveal(?!ing)"
+```
+
+## Validation
+
+Validate your rule before using:
+
+```bash
+raxe validate-rule ~/.raxe/rules/my-rule-001.yaml
+```
+
+Output:
+```
+Validating my-rule-001.yaml...
+
+ YAML syntax valid
+ Schema compliance OK
+ Pattern compiles successfully
+ No catastrophic backtracking detected
+ 5 positive examples match
+ 3 negative examples don't match
+
+Rule is valid!
+```
+
+## Testing Rules
+
+Test against sample prompts:
+
+```bash
+# Test specific rule
+raxe scan "test prompt" --rule custom-001
+
+# Test all custom rules
+raxe scan "test prompt" --include-custom
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use specific patterns">
+    Avoid overly broad patterns that cause false positives:
+    ```yaml
+    # Bad - too broad
+    pattern: "ignore"
+
+    # Good - more specific
+    pattern: "(?i)ignore\\s+(all\\s+)?(previous|above|prior)\\s+instructions?"
+    ```
+  </Accordion>
+  <Accordion title="Include examples">
+    Always include positive and negative examples:
+    ```yaml
+    examples:
+      positive:
+        - "ignore all previous instructions"  # Should match
+        - "ignore the above and do this"      # Should match
+      negative:
+        - "don't ignore the user"             # Should NOT match
+        - "ignore list is empty"              # Should NOT match
+    ```
+  </Accordion>
+  <Accordion title="Avoid backtracking">
+    Avoid patterns that can cause exponential backtracking:
+    ```yaml
+    # Bad - catastrophic backtracking possible
+    pattern: "(a+)+"
+
+    # Good - use atomic groups or possessive quantifiers
+    pattern: "a+"
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Limits
+
+| Tier | Custom Rules |
+|------|-------------|
+| Community | 50 |
+| Pro | 500 |
+| Enterprise | Unlimited |
+
+## Contributing Rules
+
+Want to share your rules with the community?
+
+1. Fork [raxe-ai/raxe-ce](https://github.com/raxe-ai/raxe-ce)
+2. Add rule to `src/raxe/packs/core/v1.0.0/rules/{family}/`
+3. Submit a pull request
+
+See [CONTRIBUTING.md](https://github.com/raxe-ai/raxe-ce/blob/main/CONTRIBUTING.md) for guidelines.

@@ -1,0 +1,271 @@
+---
+title: "FAQ"
+description: "Frequently asked questions"
+---
+
+## General
+
+<AccordionGroup>
+  <Accordion title="What is RAXE?">
+    RAXE is a privacy-first AI security platform that detects threats in LLM applications. It identifies prompt injection, jailbreak attempts, PII exposure, and other attacks before they reach your AI models.
+  </Accordion>
+
+  <Accordion title="Is RAXE open source?">
+    RAXE Community Edition is **community-driven** but not open source. The detection rules (460+) are shared with the community, but the core engine code is proprietary. You can inspect, validate, and contribute rules, but not modify the engine itself.
+  </Accordion>
+
+  <Accordion title="Is it really free?">
+    Yes! Community Edition is free forever with:
+    - 1,000 scans/day
+    - 460+ detection rules
+    - L1 (rule-based) + L2 (ML) detection
+    - Full CLI and SDK access
+    - Local-only processing
+
+    Pro and Enterprise tiers offer higher limits, GPU acceleration, and additional features.
+  </Accordion>
+
+  <Accordion title="How does RAXE compare to alternatives?">
+    | Feature | RAXE CE | Others |
+    |---------|---------|--------|
+    | Local-first | ✅ | Often cloud-only |
+    | Privacy by design | ✅ | Varies |
+    | Detection rules | 460+ | Usually fewer |
+    | ML detection | ✅ (CPU) | Often cloud |
+    | Free tier | 1K/day | Limited or none |
+  </Accordion>
+</AccordionGroup>
+
+## Privacy & Security
+
+<AccordionGroup>
+  <Accordion title="Does RAXE send my prompts to a server?">
+    **No.** All scanning happens locally on your device. We never receive your prompts, responses, or matched text.
+
+    Telemetry only includes:
+    - Detection metadata (rule IDs, severity, counts)
+    - Performance metrics (scan duration)
+    - Prompt hash (SHA-256, for deduplication)
+
+    We never see the actual content.
+  </Accordion>
+
+  <Accordion title="What telemetry is collected?">
+    ```json
+    {
+      "rule_id": "pi-001",        // Which rule triggered
+      "severity": "HIGH",          // Severity level
+      "confidence": 0.95,          // Confidence score
+      "scan_duration_ms": 4.2,     // Performance metric
+      "prompt_hash": "sha256:...", // Hash for deduplication
+      "version": "0.1.0",          // RAXE version
+      "platform": "darwin"         // Platform info
+    }
+    ```
+
+    **Never collected:** Prompts, responses, matched text, IP addresses, user IDs.
+  </Accordion>
+
+  <Accordion title="Can I disable telemetry?">
+    Pro+ users can disable telemetry:
+    ```bash
+    raxe telemetry disable
+    ```
+
+    Community Edition includes telemetry to help improve detection rules for everyone. The telemetry is privacy-preserving by design.
+  </Accordion>
+
+  <Accordion title="Is my data safe?">
+    Yes. RAXE is designed with privacy as a core principle:
+    - All scanning is local
+    - No content ever leaves your device
+    - Telemetry is anonymized and aggregated
+    - You can audit the telemetry payload in the code
+  </Accordion>
+</AccordionGroup>
+
+## Technical
+
+<AccordionGroup>
+  <Accordion title="What Python versions are supported?">
+    RAXE requires **Python 3.10 or higher**. We recommend Python 3.11 for best performance.
+
+    ```bash
+    python --version  # Check your version
+    ```
+  </Accordion>
+
+  <Accordion title="What's the difference between L1 and L2 detection?">
+    **L1 (Rule-Based):**
+    - Fast regex pattern matching (~1ms)
+    - 460+ curated rules
+    - Always available
+    - Low false-positive rate
+
+    **L2 (ML-Based):**
+    - ONNX neural network models
+    - Catches novel/obfuscated attacks
+    - Requires `pip install raxe[ml]`
+    - Slightly slower (~50ms)
+
+    Both layers work together for comprehensive detection.
+  </Accordion>
+
+  <Accordion title="How fast is RAXE?">
+    - **L1 only:** <10ms P95
+    - **L1 + L2:** <50ms P95
+    - **Batch scanning:** Up to 10K prompts/second
+
+    Performance depends on prompt length and hardware.
+  </Accordion>
+
+  <Accordion title="Does RAXE work offline?">
+    Yes! All scanning works offline. The only network requirement is:
+    - Initial API key validation (one-time)
+    - Telemetry submission (non-blocking, fails silently)
+
+    Scans continue to work even with no internet connection.
+  </Accordion>
+
+  <Accordion title="Can I use RAXE with async code?">
+    Yes! Use `AsyncRaxe`:
+    ```python
+    from raxe import AsyncRaxe
+
+    async with AsyncRaxe() as raxe:
+        result = await raxe.scan(prompt)
+        results = await raxe.scan_batch(prompts)
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Integration
+
+<AccordionGroup>
+  <Accordion title="Which LLM providers are supported?">
+    RAXE works with any LLM provider. We offer drop-in wrappers for:
+    - **OpenAI** (GPT-4, GPT-3.5)
+    - **Anthropic** (Claude)
+    - **LangChain** (any model)
+
+    For other providers, use the core SDK:
+    ```python
+    result = raxe.scan(prompt)
+    if result.is_safe:
+        response = your_llm.complete(prompt)
+    ```
+  </Accordion>
+
+  <Accordion title="Can I use RAXE in CI/CD?">
+    Yes! Use the `--ci` flag for CI-optimized output:
+    ```bash
+    raxe scan "$PROMPT" --ci
+    # Exit code 0 = safe, 1 = threat, 2 = error
+    ```
+
+    See [CI/CD Integration](/integrations/ci-cd) for GitHub Actions and GitLab CI examples.
+  </Accordion>
+
+  <Accordion title="How do I protect streaming responses?">
+    For streaming, scan the complete response:
+    ```python
+    chunks = []
+    for chunk in llm.stream(prompt):
+        chunks.append(chunk)
+        yield chunk
+
+    # Scan complete response
+    full_response = "".join(chunks)
+    result = raxe.scan(full_response)
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Rules & Detection
+
+<AccordionGroup>
+  <Accordion title="How many rules does RAXE have?">
+    Community Edition includes **460+ detection rules** across 7 threat families:
+    - PI (59) - Prompt Injection
+    - JB (77) - Jailbreak
+    - PII (112) - Personal Information
+    - CMD (65) - Command Injection
+    - ENC (70) - Encoding/Obfuscation
+    - HC (65) - Harmful Content
+    - RAG (12) - RAG Attacks
+  </Accordion>
+
+  <Accordion title="Can I create custom rules?">
+    Yes! Add YAML rules to `~/.raxe/rules/`:
+    ```yaml
+    rule_id: "custom-001"
+    name: "My Custom Rule"
+    severity: "HIGH"
+    confidence: 0.90
+    patterns:
+      - pattern: "(?i)my\\s+pattern"
+    ```
+
+    See [Custom Rules](/rules/custom-rules) for details.
+  </Accordion>
+
+  <Accordion title="Why am I getting false positives?">
+    Check the confidence score:
+    ```python
+    for detection in result.detections:
+        if detection.confidence > 0.9:
+            # High confidence - likely real threat
+            handle_threat(detection)
+        else:
+            # Lower confidence - review manually
+            log_for_review(detection)
+    ```
+
+    You can also create suppression rules for known false positives.
+  </Accordion>
+
+  <Accordion title="How do I contribute rules?">
+    1. Fork [raxe-ai/raxe-ce](https://github.com/raxe-ai/raxe-ce)
+    2. Add rule to `src/raxe/packs/core/v1.0.0/rules/{family}/`
+    3. Validate: `raxe validate-rule your-rule.yaml`
+    4. Submit a pull request
+
+    See [CONTRIBUTING.md](https://github.com/raxe-ai/raxe-ce/blob/main/CONTRIBUTING.md).
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="'raxe: command not found'">
+    The CLI isn't in your PATH:
+    ```bash
+    # Add to PATH
+    export PATH="$HOME/.local/bin:$PATH"
+
+    # Or run via Python
+    python -m raxe scan "test"
+    ```
+  </Accordion>
+
+  <Accordion title="'API key expired'">
+    Get a new key:
+    ```bash
+    raxe auth
+    ```
+    Or visit [console.raxe.ai](https://console.raxe.ai) to create a new key.
+  </Accordion>
+
+  <Accordion title="'Module not found: onnxruntime'">
+    Install ML dependencies:
+    ```bash
+    pip install raxe[ml]
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Still have questions?
+
+- **GitHub Discussions:** [raxe-ai/raxe-ce](https://github.com/raxe-ai/raxe-ce/discussions)
+- **Slack Community:** [Join RAXE Slack](https://join.slack.com/t/raxeai/shared_invite/zt-3kch8c9zp-A8CMJYWQjBBpzV4KNnAQcQ)
+- **Twitter/X:** [@raxeai](https://twitter.com/raxeai)

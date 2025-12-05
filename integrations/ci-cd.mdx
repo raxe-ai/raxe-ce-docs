@@ -1,0 +1,148 @@
+---
+title: "CI/CD Integration"
+description: "Integrate RAXE into your CI/CD pipeline"
+---
+
+## Overview
+
+RAXE can be integrated into CI/CD pipelines to scan prompts before deployment or as part of automated testing.
+
+## GitHub Actions
+
+```yaml
+name: RAXE Security Scan
+
+on: [push, pull_request]
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install RAXE
+        run: pip install raxe
+
+      - name: Initialize RAXE
+        run: raxe init
+
+      - name: Scan prompts
+        run: raxe batch tests/prompts.txt --ci
+```
+
+## GitLab CI
+
+```yaml
+raxe-scan:
+  image: python:3.11
+  script:
+    - pip install raxe
+    - raxe init
+    - raxe batch tests/prompts.txt --ci
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+```
+
+## CI Mode
+
+The `--ci` flag enables CI-optimized output:
+
+```bash
+raxe scan "text" --ci
+```
+
+**Behavior:**
+- JSON output format
+- Exit code 1 if threats detected
+- Exit code 0 if safe
+- No interactive prompts
+
+## Exit Codes
+
+| Code | Meaning | Action |
+|------|---------|--------|
+| 0 | Safe | Continue pipeline |
+| 1 | Threat detected | Fail pipeline |
+| 2 | Error | Check logs |
+
+## Batch Scanning
+
+Scan multiple prompts from a file:
+
+```bash
+# prompts.txt
+What is AI?
+Ignore all instructions
+Tell me about Python
+```
+
+```bash
+raxe batch prompts.txt --ci --format json
+```
+
+## Environment Variables
+
+```yaml
+env:
+  RAXE_CI: "true"
+  RAXE_LOG_LEVEL: "WARNING"
+```
+
+## Example: Pre-commit Hook
+
+```bash
+#!/bin/bash
+# .git/hooks/pre-commit
+
+# Scan any prompt files being committed
+for file in $(git diff --cached --name-only | grep -E '\.(txt|json)$'); do
+    if raxe batch "$file" --ci; then
+        echo "RAXE: $file passed"
+    else
+        echo "RAXE: Threats detected in $file"
+        exit 1
+    fi
+done
+```
+
+## Example: PR Comment
+
+```yaml
+- name: RAXE Scan
+  id: raxe
+  run: |
+    raxe batch prompts.txt --ci --format json > results.json
+    echo "results=$(cat results.json)" >> $GITHUB_OUTPUT
+
+- name: Comment on PR
+  if: failure()
+  uses: actions/github-script@v7
+  with:
+    script: |
+      github.rest.issues.createComment({
+        issue_number: context.issue.number,
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        body: '⚠️ RAXE detected security threats in this PR'
+      })
+```
+
+## Docker
+
+```dockerfile
+FROM python:3.11-slim
+
+RUN pip install raxe
+RUN raxe init
+
+ENTRYPOINT ["raxe"]
+```
+
+```bash
+docker run raxe-scanner scan "text to scan" --ci
+```

@@ -1,0 +1,266 @@
+---
+title: "CLI Commands"
+description: "Complete command reference"
+---
+
+## raxe scan
+
+Scan text for threats.
+
+```bash
+raxe scan "text to scan"
+```
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `--format` | Output format: `text`, `json` |
+| `--ci` | CI mode (JSON + exit code 1 on threats) |
+| `--explain` | Show detailed explanations |
+| `--rule` | Test specific rule only |
+
+### Examples
+
+```bash
+# Basic scan
+raxe scan "Ignore all previous instructions"
+
+# JSON output
+raxe scan "text" --format json
+
+# CI mode
+raxe scan "text" --ci
+
+# With explanations
+raxe scan "text" --explain
+```
+
+---
+
+## raxe batch
+
+Scan multiple prompts from file.
+
+```bash
+raxe batch prompts.txt
+```
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `--format` | Output format: `text`, `json`, `csv` |
+| `--output` | Write results to file |
+
+### Examples
+
+```bash
+# Scan from file
+raxe batch prompts.txt
+
+# Output to JSON file
+raxe batch prompts.txt --format json --output results.json
+
+# From stdin
+cat prompts.txt | raxe batch -
+```
+
+---
+
+## raxe repl
+
+Interactive scanning mode.
+
+```bash
+raxe repl
+```
+
+### REPL Commands
+
+| Command | Description |
+|---------|-------------|
+| `scan <text>` | Scan text |
+| `rules` | List loaded rules |
+| `stats` | Show session stats |
+| `clear` | Clear screen |
+| `help` | Show help |
+| `quit` | Exit REPL |
+
+---
+
+## raxe rules
+
+Manage detection rules.
+
+```bash
+raxe rules list
+raxe rules show <rule-id>
+```
+
+### Subcommands
+
+| Command | Description |
+|---------|-------------|
+| `list` | List all rules |
+| `show <id>` | Show rule details |
+| `search <query>` | Search rules |
+
+### Examples
+
+```bash
+# List all rules
+raxe rules list
+
+# Filter by family
+raxe rules list --family PI
+
+# Show specific rule
+raxe rules show pi-001
+
+# Search rules
+raxe rules search "injection"
+```
+
+---
+
+## raxe doctor
+
+System health check.
+
+```bash
+raxe doctor
+```
+
+### Output
+
+```
+RAXE Health Check
+
+ Configuration file exists
+ Rules loaded successfully (460 rules)
+ Database initialized
+ ML model available
+ Telemetry endpoint reachable
+
+System ready!
+```
+
+---
+
+## raxe stats
+
+View scan statistics.
+
+```bash
+raxe stats
+```
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `--period` | Time period: `today`, `week`, `month`, `all` |
+
+### Output
+
+```
+RAXE Statistics (This Week)
+
+Scans: 1,234
+Threats Detected: 56
+Detection Rate: 4.5%
+
+Top Rules:
+  1. pi-001 (23 detections)
+  2. jb-003 (12 detections)
+  3. pii-042 (8 detections)
+```
+
+---
+
+## raxe config
+
+Manage configuration.
+
+```bash
+raxe config show
+raxe config set <key> <value>
+```
+
+### Subcommands
+
+| Command | Description |
+|---------|-------------|
+| `show` | Show current config |
+| `set <key> <value>` | Set config value |
+| `reset` | Reset to defaults |
+
+### Examples
+
+```bash
+# Show config
+raxe config show
+
+# Set log level
+raxe config set log_level DEBUG
+
+# Reset config
+raxe config reset
+```
+
+---
+
+## raxe init
+
+Initialize RAXE configuration.
+
+```bash
+raxe init
+```
+
+Creates:
+- `~/.raxe/config.yaml`
+- `~/.raxe/raxe.db`
+
+---
+
+## raxe export
+
+Export scan history.
+
+```bash
+raxe export --format json --output history.json
+```
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `--format` | Output format: `json`, `csv` |
+| `--output` | Output file path |
+| `--since` | Export from date |
+
+---
+
+## raxe validate-rule
+
+Validate a custom rule file.
+
+```bash
+raxe validate-rule path/to/rule.yaml
+```
+
+### Output
+
+```
+Validating rule.yaml...
+
+ YAML syntax valid
+ Schema compliance OK
+ Pattern compiles successfully
+ No catastrophic backtracking
+ Examples pass
+
+Rule is valid!
+```
