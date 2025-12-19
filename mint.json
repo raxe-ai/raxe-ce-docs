@@ -63,6 +63,7 @@
         "concepts/detection-engine",
         "concepts/threat-families",
         "concepts/policies",
+        "concepts/suppressions",
         "concepts/architecture"
       ]
     },

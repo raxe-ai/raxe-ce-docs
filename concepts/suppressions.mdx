@@ -1,0 +1,200 @@
+---
+title: 'Suppressions'
+description: 'Manage false positives with the RAXE suppression system'
+---
+
+## Overview
+
+The suppression system allows you to manage false positives in your AI security workflow. When RAXE detects a threat that you've verified as safe, you can suppress it to prevent future alerts.
+
+<Info>
+Suppressions should be used sparingly. Before suppressing, verify it's a true false positive and consider if the detection rule needs updating.
+</Info>
+
+## Configuration
+
+Suppressions are configured in `.raxe/suppressions.yaml`:
+
+```yaml
+version: "1.0"
+
+suppressions:
+  - pattern: "pi-001"
+    reason: "Known false positive in authentication flow"
+
+  - pattern: "jb-*"
+    reason: "Test suite uses jailbreak patterns"
+    expires: "2025-06-01"
+```
+
+### Required Fields
+
+| Field | Description |
+|-------|-------------|
+| `pattern` | Rule ID or wildcard pattern (e.g., `pi-001`, `pi-*`) |
+| `reason` | Human-readable reason for suppression (required for audit) |
+
+### Optional Fields
+
+| Field | Description |
+|-------|-------------|
+| `expires` | ISO 8601 expiration date |
+| `action` | Override action: `SUPPRESS`, `FLAG`, or `LOG` |
+| `created_by` | Who created the suppression |
+
+## Patterns
+
+Patterns support wildcards with family prefixes:
+
+```yaml
+# Valid patterns
+- pattern: "pi-001"       # Exact rule ID
+- pattern: "pi-*"         # All prompt injection rules
+- pattern: "jb-00*"       # Jailbreak rules starting with 00
+- pattern: "*-injection"  # All injection-related rules
+```
+
+<Warning>
+Bare wildcards (`*`) are not allowed. You must specify a family prefix like `pi-*` or `jb-*`.
+</Warning>
+
+### Valid Family Prefixes
+
+| Prefix | Family |
+|--------|--------|
+| `pi` | Prompt Injection |
+| `jb` | Jailbreak |
+| `pii` | PII Leakage |
+| `cmd` | Command Injection |
+| `hc` | Harmful Content |
+| `enc` | Encoding Attacks |
+| `rag` | RAG Attacks |
+
+## Actions
+
+Instead of fully suppressing a detection, you can override its action:
+
+| Action | Behavior |
+|--------|----------|
+| `SUPPRESS` | Remove from results entirely (default) |
+| `FLAG` | Keep in results but mark for human review |
+| `LOG` | Keep in results for metrics/logging only |
+
+```yaml
+suppressions:
+  - pattern: "hc-*"
+    action: FLAG
+    reason: "Harmful content requires human review"
+```
+
+## SDK Usage
+
+### Inline Suppression
+
+```python
+from raxe import Raxe
+
+client = Raxe()
+
+# Simple pattern suppression
+result = client.scan(text, suppress=["pi-001", "jb-*"])
+
+# With action override
+result = client.scan(text, suppress=[
+    {"pattern": "pi-001", "action": "FLAG", "reason": "Review required"}
+])
+```
+
+### Context Manager
+
+```python
+# Suppress for multiple scans
+with client.suppressed("pi-*", reason="Testing auth flow"):
+    result1 = client.scan(text1)
+    result2 = client.scan(text2)
+```
+
+## CLI Usage
+
+### Scan with Suppression
+
+```bash
+# Single suppression
+raxe scan "text" --suppress pi-001
+
+# Multiple suppressions
+raxe scan "text" --suppress pi-001 --suppress "jb-*"
+
+# With action override
+raxe scan "text" --suppress "pi-001:FLAG"
+```
+
+### Manage Suppressions
+
+```bash
+# List all suppressions
+raxe suppress list
+
+# Add a suppression
+raxe suppress add pi-001 --reason "Known false positive"
+
+# Remove a suppression
+raxe suppress remove pi-001
+
+# View audit log
+raxe suppress audit
+```
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Be Specific" icon="bullseye">
+    Use exact rule IDs when possible. Avoid broad wildcards.
+  </Card>
+  <Card title="Set Expirations" icon="clock">
+    Temporary suppressions should have expiration dates.
+  </Card>
+  <Card title="Document Reasons" icon="file-lines">
+    Provide clear reasons for audit compliance.
+  </Card>
+  <Card title="Review Regularly" icon="calendar">
+    Schedule quarterly reviews of active suppressions.
+  </Card>
+</CardGroup>
+
+### Example: Good vs. Bad Reasons
+
+```yaml
+# Bad - not actionable
+- pattern: "pi-001"
+  reason: "false positive"
+
+# Good - explains context
+- pattern: "pi-001"
+  reason: "Auth flow uses 'ignore previous' in rate limit messages - verified safe"
+```
+
+## Troubleshooting
+
+### Suppression Not Working
+
+1. Check pattern syntax: `raxe suppress list`
+2. Verify file location: `ls -la .raxe/suppressions.yaml`
+3. Check for expiration: Expired suppressions are automatically skipped
+
+### Invalid Pattern Error
+
+Ensure patterns have valid family prefixes:
+
+```
+Error: Wildcard patterns must have a valid family prefix.
+Pattern: foo-*, Valid families: pi, jb, pii, cmd, hc, enc, rag
+```
+
+### Missing Reason Error
+
+All suppressions require a reason field:
+
+```
+Error: suppressions[0]: Missing required field: reason
+```
