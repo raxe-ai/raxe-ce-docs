@@ -9,6 +9,24 @@ description: "RAXE Python SDK integration patterns"
 pip install raxe
 ```
 
+## Import Quick Reference
+
+```python
+# Core clients
+from raxe import Raxe, AsyncRaxe
+
+# LLM wrappers (requires raxe[wrappers])
+from raxe import RaxeOpenAI, AsyncRaxeOpenAI
+from raxe import RaxeAnthropic, AsyncRaxeAnthropic
+
+# Exceptions
+from raxe import RaxeError, RaxeBlockedError, ValidationError
+
+# Models (for type hints and comparisons)
+from raxe.domain.rules.models import Severity, Detection
+from raxe.application.scan_result import ScanResult
+```
+
 ## Quick Start
 
 ```python
@@ -17,8 +35,8 @@ from raxe import Raxe
 raxe = Raxe()
 result = raxe.scan("Your prompt here")
 
-if result.has_threats:
-    print(f"Threat: {result.severity}")
+if result.is_threat:
+    print(f"Threat: {result.highest_severity}")
 ```
 
 ## Integration Patterns
@@ -58,11 +76,11 @@ raxe = Raxe()
 result = raxe.scan("user input")
 
 # Check results
-if result.has_threats:
-    print(f"Severity: {result.severity}")
-    print(f"Detections: {result.total_detections}")
+if result.is_threat:
+    print(f"Severity: {result.highest_severity}")
+    print(f"Detections: {result.detection_count}")
     for d in result.detections:
-        print(f"  - {d.rule_id}: {d.category}")
+        print(f"  - {d.rule_id}: {d.family}")
 ```
 
 ## Decorator Pattern

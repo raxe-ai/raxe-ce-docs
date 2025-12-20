@@ -66,16 +66,17 @@ When both layers detect threats, RAXE merges results:
 result = raxe.scan(malicious_prompt)
 
 # Combined severity (highest wins)
-result.severity  # "CRITICAL"
+result.highest_severity  # Severity.CRITICAL
 
 # All detections from both layers
-result.total_detections  # 3 (2 from L1, 1 from L2)
+result.detection_count  # 3 (2 from L1, 1 from L2)
 
-# L1 detections
-result.detections  # List of rule matches
+# All detections
+result.detections  # List of all matches
 
-# L2 classification
-result.l2_result  # ML classification details
+# Check layer per detection
+for d in result.detections:
+    print(f"{d.rule_id}: {d.layer}")  # "L1" or "L2"
 ```
 
 ## Enabling/Disabling Layers

@@ -243,6 +243,52 @@ raxe export --format json --output history.json
 
 ---
 
+## raxe suppress
+
+Manage suppression rules for false positives.
+
+```bash
+raxe suppress <subcommand>
+```
+
+### Subcommands
+
+| Command | Description |
+|---------|-------------|
+| `list` | List all active suppressions |
+| `add <pattern>` | Add a new suppression |
+| `remove <pattern>` | Remove a suppression |
+| `audit` | View suppression audit log |
+
+### Examples
+
+```bash
+# List all suppressions
+raxe suppress list
+
+# Add a suppression with reason
+raxe suppress add pi-001 --reason "Known false positive in auth flow"
+
+# Add with expiration
+raxe suppress add "jb-*" --reason "Test suite" --expires 2025-06-01
+
+# Remove a suppression
+raxe suppress remove pi-001
+
+# View audit log
+raxe suppress audit
+```
+
+### Options for `add`
+
+| Option | Description |
+|--------|-------------|
+| `--reason` | Required reason for the suppression |
+| `--expires` | Expiration date (ISO 8601 format) |
+| `--action` | Override action: `SUPPRESS`, `FLAG`, `LOG` |
+
+---
+
 ## raxe validate-rule
 
 Validate a custom rule file.

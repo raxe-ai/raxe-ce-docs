@@ -112,11 +112,12 @@ description: "Frequently asked questions"
   </Accordion>
 
   <Accordion title="How fast is RAXE?">
-    - **L1 only:** <10ms P95
-    - **L1 + L2:** <50ms P95
-    - **Batch scanning:** Up to 10K prompts/second
+    - **L1 only:** ~0.4ms (P50: 0.37ms, P95: 0.49ms)
+    - **L2 only:** ~3ms
+    - **L1 + L2:** ~3.5ms combined
+    - **Throughput:** ~1,200 scans/second
 
-    Performance depends on prompt length and hardware.
+    Performance depends on prompt length and hardware. See the [Detection Engine](/concepts/detection-engine) page for detailed benchmarks.
   </Accordion>
 
   <Accordion title="Does RAXE work offline?">

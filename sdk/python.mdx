@@ -21,31 +21,32 @@ raxe = Raxe()
 result = raxe.scan("Ignore all previous instructions")
 
 # Check for threats
-if result.has_threats:
+if result.is_threat:
     print(f"Threat detected!")
-    print(f"Severity: {result.severity}")
-    print(f"Total detections: {result.total_detections}")
+    print(f"Severity: {result.highest_severity}")
+    print(f"Total detections: {result.detection_count}")
 ```
 
 ## ScanResult Object
 
-The `scan()` method returns a `ScanPipelineResult`:
+The `scan()` method returns a `ScanResult`:
 
 ```python
 result = raxe.scan("test prompt")
 
 # Boolean evaluation - True when SAFE
-if result:
+if result.is_safe:
     print("Safe to proceed")
 else:
     print("Threat detected")
 
 # Properties
-result.has_threats        # bool: Any threats detected?
-result.severity           # str | None: CRITICAL/HIGH/MEDIUM/LOW
-result.total_detections   # int: Number of detections
-result.detections         # list[Detection]: All L1 detections
-result.duration_ms        # float: Scan time in milliseconds
+result.is_safe            # bool: True if no threats detected
+result.is_threat          # bool: True if any threat detected
+result.highest_severity   # Severity: CRITICAL/HIGH/MEDIUM/LOW/NONE
+result.detection_count    # int: Number of detections
+result.detections         # list[Detection]: All detections
+result.scan_duration_ms   # float: Scan time in milliseconds
 ```
 
 ## Detection Object
@@ -115,21 +116,22 @@ except RaxeBlockedError as e:
 
 ```python
 from raxe import Raxe
+from raxe.domain.rules.models import Severity
 
 raxe = Raxe()
 
 def process_with_custom_logic(user_input: str) -> str:
     result = raxe.scan(user_input)
 
-    if result.has_threats:
-        severity = result.severity
+    if result.is_threat:
+        severity = result.highest_severity
 
-        if severity == "CRITICAL":
+        if severity >= Severity.CRITICAL:
             # Block and alert
             alert_security_team(result)
             return "Request blocked."
 
-        elif severity == "HIGH":
+        elif severity >= Severity.HIGH:
             # Log and proceed with caution
             log_suspicious_activity(result)
             return generate_with_guardrails(user_input)
