@@ -1,0 +1,314 @@
+---
+title: "Performance"
+description: "RAXE performance benchmarks and optimization guide"
+---
+
+## Overview
+
+RAXE is designed for production workloads with sub-millisecond latency and high throughput.
+
+<CardGroup cols={3}>
+  <Card title="P50 Latency" icon="gauge-high">
+    **0.37ms**
+  </Card>
+  <Card title="P95 Latency" icon="gauge">
+    **0.49ms**
+  </Card>
+  <Card title="Throughput" icon="bolt">
+    **~1,200/sec**
+  </Card>
+</CardGroup>
+
+---
+
+## Benchmark Results
+
+### Latency by Configuration
+
+| Configuration | P50 | P95 | P99 | Use Case |
+|---------------|-----|-----|-----|----------|
+| L1 only (fast) | 0.37ms | 0.49ms | 1.34ms | High-throughput APIs |
+| L2 only (ML) | ~3ms | ~5ms | ~10ms | Novel attack detection |
+| L1 + L2 (balanced) | ~3.5ms | ~5.5ms | ~12ms | Production default |
+| L1 + L2 (thorough) | ~5ms | ~8ms | ~15ms | Maximum security |
+
+### Throughput
+
+| Mode | Single-threaded | Multi-threaded (10) | AsyncRaxe |
+|------|-----------------|---------------------|-----------|
+| L1 only | ~1,200/sec | ~8,000/sec | ~10,000/sec |
+| L1 + L2 | ~250/sec | ~2,000/sec | ~3,000/sec |
+
+### Memory Usage
+
+| Component | Memory |
+|-----------|--------|
+| Base SDK | ~20MB |
+| L1 Rules (460+) | ~10MB |
+| L2 ML Model | ~30MB |
+| **Total Peak** | **~60MB** |
+
+---
+
+## Performance Modes
+
+RAXE provides three performance modes to balance speed and detection:
+
+### Fast Mode
+
+L1 rules only, optimized for latency.
+
+```python
+from raxe import Raxe
+
+raxe = Raxe()
+
+# Using scan_fast()
+result = raxe.scan_fast("text to scan")
+
+# Or with mode parameter
+result = raxe.scan("text", mode="fast", l2_enabled=False)
+```
+
+**Characteristics:**
+- ~0.4ms average latency
+- 85% detection rate
+- Zero ML overhead
+- Best for: High-volume APIs, real-time chat
+
+### Balanced Mode (Default)
+
+L1 + L2 with async parallel execution.
+
+```python
+result = raxe.scan("text", mode="balanced")
+```
+
+**Characteristics:**
+- ~3.5ms average latency
+- 95% detection rate
+- ML runs in parallel with rules
+- Best for: Production applications
+
+### Thorough Mode
+
+All detection layers with maximum coverage.
+
+```python
+result = raxe.scan_thorough("text to scan")
+```
+
+**Characteristics:**
+- ~5ms average latency
+- 95%+ detection rate
+- Additional rule variations checked
+- Best for: Security-critical applications
+
+---
+
+## Optimization Tips
+
+### 1. Use AsyncRaxe for High Throughput
+
+```python
+from raxe import AsyncRaxe
+
+async with AsyncRaxe() as raxe:
+    # Batch scanning with concurrency
+    results = await raxe.scan_batch(
+        prompts,
+        max_concurrency=20
+    )
+```
+
+### 2. Enable Caching
+
+AsyncRaxe includes built-in caching for repeated scans:
+
+```python
+raxe = AsyncRaxe(
+    cache_size=1000,   # Max cached results
+    cache_ttl=300.0    # 5 minute TTL
+)
+
+# Check cache stats
+stats = raxe.cache_stats()
+print(f"Hit rate: {stats['hit_rate']:.1%}")
+```
+
+### 3. Disable L2 for Speed-Critical Paths
+
+```python
+# One-time fast scan
+result = raxe.scan("text", l2_enabled=False)
+
+# Or configure at client level
+raxe = Raxe(l2_enabled=False)
+```
+
+### 4. Use Thread Pools for Sync Code
+
+```python
+from concurrent.futures import ThreadPoolExecutor
+from raxe import Raxe
+
+raxe = Raxe()  # Thread-safe
+
+with ThreadPoolExecutor(max_workers=10) as executor:
+    results = list(executor.map(raxe.scan, prompts))
+```
+
+### 5. Warm Up on Startup
+
+First scan has initialization overhead. Warm up during startup:
+
+```python
+def init_raxe():
+    raxe = Raxe()
+    # Warm up scan
+    raxe.scan("warmup")
+    return raxe
+```
+
+---
+
+## Latency Breakdown
+
+### L1 (Rule-Based) Detection
+
+| Stage | Time |
+|-------|------|
+| Text preprocessing | ~0.05ms |
+| Pattern compilation | Cached |
+| Pattern matching | ~0.25ms |
+| Result aggregation | ~0.05ms |
+| **Total** | **~0.35ms** |
+
+### L2 (ML-Based) Detection
+
+| Stage | Time |
+|-------|------|
+| Text tokenization | ~0.5ms |
+| Feature extraction | ~0.5ms |
+| ONNX inference | ~2ms |
+| Prediction decode | ~0.1ms |
+| **Total** | **~3ms** |
+
+### Combined Pipeline
+
+```
+┌──────────────────────────────────────────────────┐
+│                  Scan Pipeline                    │
+├──────────────────────────────────────────────────┤
+│  Input → ┬─→ L1 Rules (0.4ms) ─┬→ Merge → Output │
+│          └─→ L2 ML (3ms) ──────┘                 │
+│                                                   │
+│  Total: ~3.5ms (parallel execution)              │
+└──────────────────────────────────────────────────┘
+```
+
+---
+
+## Hardware Recommendations
+
+### Minimum Requirements
+
+- CPU: 2 cores
+- RAM: 512MB
+- Python: 3.10+
+
+### Recommended (Production)
+
+- CPU: 4+ cores (for parallel L1/L2)
+- RAM: 2GB+
+- SSD: For scan history database
+
+### High-Throughput
+
+- CPU: 8+ cores
+- RAM: 4GB+
+- Use AsyncRaxe with high concurrency
+
+---
+
+## Monitoring Performance
+
+### Built-in Profiling
+
+```python
+result = raxe.scan("text")
+
+print(f"Total: {result.duration_ms:.2f}ms")
+print(f"L1: {result.l1_duration_ms:.2f}ms")
+print(f"L2: {result.l2_duration_ms:.2f}ms")
+```
+
+### CLI Profiling
+
+```bash
+raxe scan "text" --profile
+```
+
+Output:
+```
+Scan completed in 3.45ms
+
+Breakdown:
+  L1 (rules): 0.42ms (12%)
+  L2 (ML): 2.89ms (84%)
+  Policy: 0.08ms (2%)
+  Other: 0.06ms (2%)
+```
+
+### Statistics
+
+```bash
+raxe stats
+```
+
+Shows aggregate performance over time.
+
+---
+
+## Benchmarking Your Setup
+
+Run the built-in benchmark:
+
+```bash
+raxe profile --iterations 1000
+```
+
+Or in Python:
+
+```python
+import time
+from raxe import Raxe
+
+raxe = Raxe()
+prompts = ["test prompt"] * 1000
+
+start = time.perf_counter()
+for prompt in prompts:
+    raxe.scan(prompt)
+elapsed = time.perf_counter() - start
+
+print(f"Total: {elapsed:.2f}s")
+print(f"Average: {elapsed/len(prompts)*1000:.2f}ms")
+print(f"Throughput: {len(prompts)/elapsed:.0f}/sec")
+```
+
+---
+
+## Performance Guarantees
+
+RAXE is designed to avoid performance regressions:
+
+- **No catastrophic backtracking**: All 460+ regex patterns are REDOS-safe
+- **Bounded memory**: Fixed-size buffers, no unbounded allocations
+- **Timeouts**: Configurable scan timeouts prevent runaway processing
+- **Circuit breaker**: Graceful degradation under extreme load
+
+```python
+# Configure timeout
+result = raxe.scan("text", timeout=5.0)  # 5 second max
+```

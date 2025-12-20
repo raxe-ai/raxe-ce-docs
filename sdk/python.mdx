@@ -21,32 +21,35 @@ raxe = Raxe()
 result = raxe.scan("Ignore all previous instructions")
 
 # Check for threats
-if result.is_threat:
+if result.has_threats:
     print(f"Threat detected!")
-    print(f"Severity: {result.highest_severity}")
-    print(f"Total detections: {result.detection_count}")
+    print(f"Severity: {result.severity}")
+    print(f"Total detections: {result.total_detections}")
 ```
 
-## ScanResult Object
+## ScanPipelineResult Object
 
-The `scan()` method returns a `ScanResult`:
+The `scan()` method returns a `ScanPipelineResult`:
 
 ```python
 result = raxe.scan("test prompt")
 
 # Boolean evaluation - True when SAFE
-if result.is_safe:
+if result:  # True when no threats
     print("Safe to proceed")
 else:
     print("Threat detected")
 
 # Properties
-result.is_safe            # bool: True if no threats detected
-result.is_threat          # bool: True if any threat detected
-result.highest_severity   # Severity: CRITICAL/HIGH/MEDIUM/LOW/NONE
-result.detection_count    # int: Number of detections
-result.detections         # list[Detection]: All detections
-result.scan_duration_ms   # float: Scan time in milliseconds
+result.has_threats        # bool: True if any threat detected
+result.severity           # str | None: "critical", "high", "medium", "low", "info"
+result.total_detections   # int: Number of detections (L1 + L2)
+result.detections         # list[Detection]: All L1 detections
+result.duration_ms        # float: Total scan time in milliseconds
+result.should_block       # bool: True if policy says to block
+result.l1_detections      # int: Count of L1 detections
+result.l2_detections      # int: Count of L2 predictions
+result.text_hash          # str: SHA256 hash of scanned text
 ```
 
 ## Detection Object
@@ -116,22 +119,21 @@ except RaxeBlockedError as e:
 
 ```python
 from raxe import Raxe
-from raxe.domain.rules.models import Severity
 
 raxe = Raxe()
 
 def process_with_custom_logic(user_input: str) -> str:
     result = raxe.scan(user_input)
 
-    if result.is_threat:
-        severity = result.highest_severity
+    if result.has_threats:
+        severity = result.severity
 
-        if severity >= Severity.CRITICAL:
+        if severity == "critical":
             # Block and alert
             alert_security_team(result)
             return "Request blocked."
 
-        elif severity >= Severity.HIGH:
+        elif severity == "high":
             # Log and proceed with caution
             log_suspicious_activity(result)
             return generate_with_guardrails(user_input)
@@ -177,14 +179,16 @@ except RaxeError as e:
 ## Filtering Detections
 
 ```python
+from raxe.domain.rules.models import Severity
+
 result = raxe.scan(user_input)
 
 # Filter by category
-pi_threats = [d for d in result.detections if d.category == "PI"]
-pii_threats = [d for d in result.detections if d.category == "PII"]
+pi_threats = [d for d in result.detections if d.category == "prompt_injection"]
+pii_threats = [d for d in result.detections if d.category == "pii"]
 
-# Filter by severity
-critical = [d for d in result.detections if d.severity.value == "CRITICAL"]
+# Filter by severity (using enum)
+critical = [d for d in result.detections if d.severity == Severity.CRITICAL]
 
 # Filter by confidence
 high_confidence = [d for d in result.detections if d.confidence >= 0.9]

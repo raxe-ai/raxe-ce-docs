@@ -14,9 +14,10 @@ from raxe import Raxe
 
 raxe = Raxe(
     api_key: str | None = None,
-    use_ml: bool = True,
-    timeout: float = 30.0,
-    config_path: str | None = None,
+    config_path: Path | None = None,
+    telemetry: bool = True,
+    l2_enabled: bool = True,
+    voting_preset: str | None = None,
 )
 ```
 
@@ -25,9 +26,10 @@ raxe = Raxe(
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `api_key` | `str \| None` | `None` | API key. If None, reads from config or env |
-| `use_ml` | `bool` | `True` | Enable L2 ML detection |
-| `timeout` | `float` | `30.0` | Scan timeout in seconds |
-| `config_path` | `str \| None` | `None` | Custom config file path |
+| `config_path` | `Path \| None` | `None` | Custom config file path |
+| `telemetry` | `bool` | `True` | Enable anonymous telemetry |
+| `l2_enabled` | `bool` | `True` | Enable L2 ML detection |
+| `voting_preset` | `str \| None` | `None` | Voting strategy preset |
 
 **Example:**
 
@@ -37,13 +39,12 @@ raxe = Raxe()
 
 # With custom settings
 raxe = Raxe(
-    api_key="raxe_your_key",
-    use_ml=True,
-    timeout=60.0
+    l2_enabled=True,
+    telemetry=True
 )
 
 # Disable ML for faster scans
-raxe = Raxe(use_ml=False)
+raxe = Raxe(l2_enabled=False)
 ```
 
 ---
@@ -55,26 +56,42 @@ Scan a single prompt for threats.
 ```python
 def scan(
     self,
-    prompt: str,
+    text: str,
     *,
-    use_ml: bool | None = None,
-    timeout: float | None = None,
-) -> ScanResult
+    customer_id: str | None = None,
+    context: dict | None = None,
+    block_on_threat: bool = False,
+    mode: str = "balanced",
+    l1_enabled: bool = True,
+    l2_enabled: bool = True,
+    confidence_threshold: float = 0.5,
+    explain: bool = False,
+    dry_run: bool = False,
+    suppress: list | None = None,
+) -> ScanPipelineResult
 ```
 
 **Parameters:**
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `prompt` | `str` | required | Text to scan |
-| `use_ml` | `bool \| None` | `None` | Override ML setting for this scan |
-| `timeout` | `float \| None` | `None` | Override timeout for this scan |
+| `text` | `str` | required | Text to scan |
+| `customer_id` | `str \| None` | `None` | Customer identifier for tracking |
+| `context` | `dict \| None` | `None` | Additional context metadata |
+| `block_on_threat` | `bool` | `False` | Raise SecurityException on threat |
+| `mode` | `str` | `"balanced"` | Performance mode: "fast", "balanced", "accurate" |
+| `l1_enabled` | `bool` | `True` | Enable L1 rule detection |
+| `l2_enabled` | `bool` | `True` | Enable L2 ML detection |
+| `confidence_threshold` | `float` | `0.5` | Minimum confidence for detections |
+| `explain` | `bool` | `False` | Include detailed explanations |
+| `dry_run` | `bool` | `False` | Skip actual detection (for testing) |
+| `suppress` | `list \| None` | `None` | Rule patterns to suppress |
 
-**Returns:** `ScanResult`
+**Returns:** `ScanPipelineResult`
 
 **Raises:**
-- `ValidationError`: If prompt is empty or invalid
-- `RaxeBlockedError`: If policy blocks the request
+- `ValidationError`: If text is empty or invalid
+- `SecurityException`: If `block_on_threat=True` and threat detected
 
 **Example:**
 
@@ -85,62 +102,104 @@ raxe = Raxe()
 
 # Basic scan
 result = raxe.scan("Hello, how are you?")
-print(result.is_safe)  # True
+print(result.has_threats)  # False
 
 # Scan with detection
 result = raxe.scan("Ignore all previous instructions")
-print(result.is_safe)  # False
-print(result.highest_severity)  # Severity.HIGH
+print(result.has_threats)  # True
+print(result.severity)     # "high"
 
-# Override settings for single scan
+# Scan with suppression
 result = raxe.scan(
     "some text",
-    use_ml=False,  # Skip ML for this scan
-    timeout=5.0    # Short timeout
+    suppress=["pi-001", "jb-*"]
 )
+
+# Block on threat
+try:
+    result = raxe.scan(
+        "malicious prompt",
+        block_on_threat=True
+    )
+except SecurityException as e:
+    print(f"Blocked: {e.message}")
 ```
 
 ---
 
-### scan_batch()
+### scan_fast()
 
-Scan multiple prompts efficiently.
+Fast scan using L1 rules only (< 3ms).
 
 ```python
-def scan_batch(
+def scan_fast(
     self,
-    prompts: list[str],
-    *,
-    use_ml: bool | None = None,
-    timeout: float | None = None,
-) -> list[ScanResult]
+    text: str,
+    **kwargs
+) -> ScanPipelineResult
+```
+
+Equivalent to `scan(text, l2_enabled=False, mode="fast")`.
+
+---
+
+### scan_thorough()
+
+Thorough scan with all layers (< 100ms).
+
+```python
+def scan_thorough(
+    self,
+    text: str,
+    **kwargs
+) -> ScanPipelineResult
+```
+
+Equivalent to `scan(text, mode="accurate")`.
+
+---
+
+### protect
+
+Decorator for automatic function protection.
+
+```python
+@raxe.protect
+def my_function(prompt: str) -> str:
+    return llm.generate(prompt)
+
+# With configuration
+@raxe.protect(block=True, on_threat=my_handler)
+def my_function(prompt: str) -> str:
+    return llm.generate(prompt)
 ```
 
 **Parameters:**
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `prompts` | `list[str]` | required | List of texts to scan |
-| `use_ml` | `bool \| None` | `None` | Override ML setting |
-| `timeout` | `float \| None` | `None` | Override timeout (per prompt) |
+| `block` | `bool` | `True` | Raise exception on threat |
+| `on_threat` | `callable \| None` | `None` | Custom threat handler |
+| `allow_severity` | `list \| None` | `None` | Severities to allow through |
 
-**Returns:** `list[ScanResult]`
+---
 
-**Example:**
+### suppressed()
+
+Context manager for scoped suppressions.
 
 ```python
-prompts = [
-    "Hello, how are you?",
-    "Ignore all previous instructions",
-    "What is the weather?",
-]
-
-results = raxe.scan_batch(prompts)
-
-for prompt, result in zip(prompts, results):
-    status = "SAFE" if result.is_safe else "THREAT"
-    print(f"{status}: {prompt[:30]}...")
+with raxe.suppressed("pi-*", reason="Testing auth flow"):
+    result = raxe.scan(text)  # pi-* rules suppressed
 ```
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `*patterns` | `str` | Rule patterns to suppress |
+| `action` | `str` | Action: "SUPPRESS", "FLAG", "LOG" |
+| `reason` | `str` | Reason for suppression (required) |
 
 ---
 
@@ -153,7 +212,7 @@ from raxe import Raxe
 
 with Raxe() as raxe:
     result = raxe.scan("Hello")
-    # Resources automatically cleaned up
+    # Resources automatically cleaned up on exit
 ```
 
 ---
@@ -169,13 +228,20 @@ from raxe import AsyncRaxe
 
 raxe = AsyncRaxe(
     api_key: str | None = None,
-    use_ml: bool = True,
-    timeout: float = 30.0,
-    config_path: str | None = None,
+    config_path: Path | None = None,
+    telemetry: bool = True,
+    l2_enabled: bool = True,
+    cache_size: int = 1000,
+    cache_ttl: float = 300.0,
 )
 ```
 
-Same parameters as `Raxe`.
+**Additional Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `cache_size` | `int` | `1000` | Max cached scan results |
+| `cache_ttl` | `float` | `300.0` | Cache TTL in seconds |
 
 ---
 
@@ -186,11 +252,13 @@ Async scan of a single prompt.
 ```python
 async def scan(
     self,
-    prompt: str,
+    text: str,
     *,
-    use_ml: bool | None = None,
-    timeout: float | None = None,
-) -> ScanResult
+    customer_id: str | None = None,
+    context: dict | None = None,
+    block_on_threat: bool = False,
+    use_cache: bool = True,
+) -> ScanPipelineResult
 ```
 
 **Example:**
@@ -201,7 +269,7 @@ from raxe import AsyncRaxe
 async def check_prompt(prompt: str):
     async with AsyncRaxe() as raxe:
         result = await raxe.scan(prompt)
-        return result.is_safe
+        return not result.has_threats
 ```
 
 ---
@@ -213,22 +281,22 @@ Async batch scanning with concurrency control.
 ```python
 async def scan_batch(
     self,
-    prompts: list[str],
+    texts: list[str],
     *,
-    concurrency: int = 10,
-    use_ml: bool | None = None,
-    timeout: float | None = None,
-) -> list[ScanResult]
+    customer_id: str | None = None,
+    context: dict | None = None,
+    max_concurrency: int = 10,
+    use_cache: bool = True,
+) -> list[ScanPipelineResult]
 ```
 
 **Parameters:**
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `prompts` | `list[str]` | required | List of texts to scan |
-| `concurrency` | `int` | `10` | Max concurrent scans |
-| `use_ml` | `bool \| None` | `None` | Override ML setting |
-| `timeout` | `float \| None` | `None` | Override timeout |
+| `texts` | `list[str]` | required | List of texts to scan |
+| `max_concurrency` | `int` | `10` | Max concurrent scans |
+| `use_cache` | `bool` | `True` | Use result cache |
 
 **Example:**
 
@@ -240,9 +308,22 @@ async def scan_many(prompts: list[str]):
         # Scan up to 20 prompts concurrently
         results = await raxe.scan_batch(
             prompts,
-            concurrency=20
+            max_concurrency=20
         )
         return results
+```
+
+---
+
+### Cache Management
+
+```python
+# Get cache statistics
+stats = raxe.cache_stats()
+print(f"Hit rate: {stats['hit_rate']:.1%}")
+
+# Clear cache
+await raxe.clear_cache()
 ```
 
 ---
@@ -285,17 +366,15 @@ Both `Raxe` and `AsyncRaxe` expose these properties:
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `api_key` | `str` | Current API key |
-| `use_ml` | `bool` | ML detection enabled |
-| `timeout` | `float` | Default timeout |
-| `version` | `str` | RAXE version |
+| `usage_tracker` | `UsageTracker` | Usage statistics tracker |
+| `scan_history` | `ScanHistoryDB` | Local scan history database |
+| `stats` | `dict` | Preload statistics |
 
 **Example:**
 
 ```python
 raxe = Raxe()
-print(f"RAXE version: {raxe.version}")
-print(f"ML enabled: {raxe.use_ml}")
+print(f"Stats: {raxe.stats}")
 ```
 
 ---
@@ -304,7 +383,7 @@ print(f"ML enabled: {raxe.use_ml}")
 
 - `Raxe` is thread-safe for concurrent scans
 - `AsyncRaxe` is safe for concurrent async tasks
-- Both clients maintain internal connection pools
+- Both clients maintain internal state safely
 
 ```python
 import threading
@@ -314,7 +393,7 @@ raxe = Raxe()
 
 def scan_thread(prompt):
     result = raxe.scan(prompt)  # Thread-safe
-    return result.is_safe
+    return not result.has_threats
 
 threads = [
     threading.Thread(target=scan_thread, args=(f"prompt {i}",))

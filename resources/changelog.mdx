@@ -1,0 +1,152 @@
+---
+title: "Changelog"
+description: "What's new in RAXE Community Edition"
+---
+
+## v0.2.0 - December 20, 2025
+
+### Suppression System v1.0
+
+This release introduces a comprehensive suppression system for managing false positives in your AI security workflow.
+
+<CardGroup cols={2}>
+  <Card title="YAML Configuration" icon="file-code">
+    Structured `.raxe/suppressions.yaml` with version control and audit compliance
+  </Card>
+  <Card title="Inline Suppression" icon="code">
+    `raxe.scan(text, suppress=["pi-*"])` and context manager support
+  </Card>
+  <Card title="Policy Overrides" icon="sliders">
+    SUPPRESS, FLAG, and LOG actions for fine-grained control
+  </Card>
+  <Card title="CLI Commands" icon="terminal">
+    `raxe suppress list/add/remove/audit` for management
+  </Card>
+</CardGroup>
+
+#### Added
+
+- **YAML-based suppression configuration** (`.raxe/suppressions.yaml`)
+  - Required reason field for audit compliance
+  - Expiration date support for time-limited suppressions
+  - Wildcard patterns with family prefix validation
+
+- **Policy action overrides**
+  - `SUPPRESS` - Remove detection from results (default)
+  - `FLAG` - Keep detection but mark for human review
+  - `LOG` - Keep detection for metrics/logging only
+
+- **Inline SDK suppression**
+  - `raxe.scan(text, suppress=["pi-001", "jb-*"])` parameter
+  - `with raxe.suppressed("pi-*", reason="Testing")` context manager
+  - Thread-safe scoped suppressions
+
+- **CLI suppression commands**
+  - `raxe scan --suppress pi-001` flag
+  - `raxe suppress list/add/remove/audit/stats` subcommands
+
+- **Detection flagging**
+  - `Detection.is_flagged` field for FLAG action
+  - `Detection.suppression_reason` field
+
+#### Changed
+
+- Configuration location moved to `.raxe/` directory
+- Bare wildcard `*` patterns are now rejected (must use family prefix like `pi-*`)
+
+#### Deprecated
+
+- `.raxeignore` file format (still works, will be removed in v1.0.0)
+
+---
+
+## v0.0.1 - December 4, 2025
+
+### Open Beta Release
+
+Production-ready, privacy-first threat detection for LLM applications.
+
+<CardGroup cols={2}>
+  <Card title="460+ Detection Rules" icon="shield-halved">
+    Curated rules across 7 threat families
+  </Card>
+  <Card title="Dual-Layer Detection" icon="layer-group">
+    L1 regex + L2 ML for 95.15% detection rate
+  </Card>
+  <Card title="Privacy-First" icon="lock">
+    100% local scanning, no cloud dependency
+  </Card>
+  <Card title="Sub-millisecond" icon="bolt">
+    P50: 0.37ms, P95: 0.49ms latency
+  </Card>
+</CardGroup>
+
+#### Core Features
+
+**Detection Engine**
+- 460+ curated detection rules across 7 threat families:
+  - **PI** (59 rules) - Prompt injection, instruction override
+  - **JB** (77 rules) - Jailbreak attempts, persona manipulation
+  - **PII** (112 rules) - Personal data, credential exposure
+  - **CMD** (65 rules) - Command injection, code execution
+  - **ENC** (70 rules) - Encoding/obfuscation attacks
+  - **HC** (65 rules) - Harmful content, toxic output
+  - **RAG** (12 rules) - RAG-specific attacks
+
+**Policy System**
+- 4 policy actions: ALLOW, FLAG, BLOCK, LOG
+- Flexible targeting by rule ID, family, severity, confidence
+- Priority-based resolution (0-1000 scale)
+- YAML configuration in `.raxe/policies.yaml`
+
+**CLI**
+- `raxe scan` - Scan text for threats
+- `raxe batch` - Batch scan from files
+- `raxe repl` - Interactive mode
+- `raxe rules` - Browse detection rules
+- `raxe stats` - Usage statistics
+- `raxe doctor` - Health check
+
+**Python SDK**
+- Simple `raxe.scan(text)` API
+- OpenAI and Anthropic wrappers
+- Decorator pattern with `@raxe.protect`
+- Full async support
+
+#### Performance
+
+| Metric | Value |
+|--------|-------|
+| P50 latency | 0.37ms |
+| P95 latency | 0.49ms |
+| P99 latency | 1.34ms |
+| Throughput | ~1,200/sec |
+| Memory | ~60MB peak |
+| False positive rate | <0.1% |
+
+---
+
+## Roadmap
+
+### v0.3 (Coming Soon)
+- Response scanning
+- Chain-of-thought analysis
+- Expanded PII detection
+
+### v1.0
+- Enterprise features
+- Custom model fine-tuning
+- Multi-language SDKs
+
+### v2.0
+- Auto-generated rules
+- Adversarial testing
+- Model drift detection
+
+---
+
+## Links
+
+- [GitHub Releases](https://github.com/raxe-ai/raxe-ce/releases)
+- [Contributing Guide](https://github.com/raxe-ai/raxe-ce/blob/main/CONTRIBUTING.md)
+- [Security Policy](https://github.com/raxe-ai/raxe-ce/blob/main/SECURITY.md)

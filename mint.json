@@ -88,12 +88,15 @@
       "group": "Integrations",
       "pages": [
         "integrations/ci-cd",
-        "integrations/langchain"
+        "integrations/langchain",
+        "integrations/common-patterns"
       ]
     },
     {
       "group": "Resources",
       "pages": [
+        "resources/changelog",
+        "resources/performance",
         "resources/error-codes",
         "resources/troubleshooting",
         "resources/faq"

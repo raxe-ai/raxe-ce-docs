@@ -35,8 +35,8 @@ from raxe import Raxe
 raxe = Raxe()
 result = raxe.scan("Your prompt here")
 
-if result.is_threat:
-    print(f"Threat: {result.highest_severity}")
+if result.has_threats:
+    print(f"Threat: {result.severity}")
 ```
 
 ## Integration Patterns
@@ -76,11 +76,11 @@ raxe = Raxe()
 result = raxe.scan("user input")
 
 # Check results
-if result.is_threat:
-    print(f"Severity: {result.highest_severity}")
-    print(f"Detections: {result.detection_count}")
+if result.has_threats:
+    print(f"Severity: {result.severity}")
+    print(f"Detections: {result.total_detections}")
     for d in result.detections:
-        print(f"  - {d.rule_id}: {d.family}")
+        print(f"  - {d.rule_id}: {d.category}")
 ```
 
 ## Decorator Pattern
