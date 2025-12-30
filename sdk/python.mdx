@@ -82,15 +82,17 @@ for detection in result.detections:
 from raxe import Raxe
 
 raxe = Raxe(
+    # API key (optional - reads from config or env if not provided)
+    api_key="raxe_...",
+
+    # Telemetry
+    telemetry=True,        # Enable privacy-preserving telemetry
+
     # Detection layers
-    l1_enabled=True,       # Enable rule-based detection
-    l2_enabled=True,       # Enable ML detection
+    l2_enabled=True,       # Enable ML detection (L2)
 
-    # Logging
-    log_level="INFO",      # DEBUG, INFO, WARNING, ERROR
-
-    # Performance
-    performance_mode="balanced",  # fast, balanced, thorough
+    # L2 voting preset
+    voting_preset="balanced",  # balanced, high_security, low_fp
 )
 ```
 
@@ -161,17 +163,18 @@ with Raxe() as raxe:
 ## Error Handling
 
 ```python
-from raxe import Raxe, RaxeBlockedError, RaxeError
+from raxe import Raxe
+from raxe.sdk.exceptions import RaxeBlockedError, RaxeException
 
 raxe = Raxe()
 
 try:
-    result = raxe.scan(user_input)
+    result = raxe.scan(user_input, block_on_threat=True)
 except RaxeBlockedError as e:
-    # Threat was blocked
-    print(f"Blocked: {e.severity}")
-    print(f"Rule: {e.rule_id}")
-except RaxeError as e:
+    # Threat was blocked by policy
+    print(f"Blocked: {e.result.severity}")
+    print(f"Detections: {e.result.total_detections}")
+except RaxeException as e:
     # Other RAXE errors
     print(f"Error: {e}")
 ```

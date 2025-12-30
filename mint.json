@@ -87,8 +87,12 @@
     {
       "group": "Integrations",
       "pages": [
-        "integrations/ci-cd",
         "integrations/langchain",
+        "integrations/autogen",
+        "integrations/llamaindex",
+        "integrations/crewai",
+        "integrations/portkey",
+        "integrations/ci-cd",
         "integrations/common-patterns"
       ]
     },

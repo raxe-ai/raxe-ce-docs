@@ -18,6 +18,7 @@ raxe = Raxe(
     telemetry: bool = True,
     l2_enabled: bool = True,
     voting_preset: str | None = None,
+    progress_callback = None,
 )
 ```
 
@@ -27,9 +28,10 @@ raxe = Raxe(
 |-----------|------|---------|-------------|
 | `api_key` | `str \| None` | `None` | API key. If None, reads from config or env |
 | `config_path` | `Path \| None` | `None` | Custom config file path |
-| `telemetry` | `bool` | `True` | Enable anonymous telemetry |
+| `telemetry` | `bool` | `True` | Enable privacy-preserving telemetry |
 | `l2_enabled` | `bool` | `True` | Enable L2 ML detection |
-| `voting_preset` | `str \| None` | `None` | Voting strategy preset |
+| `voting_preset` | `str \| None` | `None` | L2 voting strategy preset: "balanced", "high_security", "low_fp" |
+| `progress_callback` | `object \| None` | `None` | Optional progress indicator for initialization |
 
 **Example:**
 
@@ -67,6 +69,7 @@ def scan(
     confidence_threshold: float = 0.5,
     explain: bool = False,
     dry_run: bool = False,
+    use_async: bool = True,
     suppress: list | None = None,
 ) -> ScanPipelineResult
 ```
@@ -79,12 +82,13 @@ def scan(
 | `customer_id` | `str \| None` | `None` | Customer identifier for tracking |
 | `context` | `dict \| None` | `None` | Additional context metadata |
 | `block_on_threat` | `bool` | `False` | Raise SecurityException on threat |
-| `mode` | `str` | `"balanced"` | Performance mode: "fast", "balanced", "accurate" |
+| `mode` | `str` | `"balanced"` | Performance mode: "fast", "balanced", "thorough" |
 | `l1_enabled` | `bool` | `True` | Enable L1 rule detection |
 | `l2_enabled` | `bool` | `True` | Enable L2 ML detection |
 | `confidence_threshold` | `float` | `0.5` | Minimum confidence for detections |
 | `explain` | `bool` | `False` | Include detailed explanations |
-| `dry_run` | `bool` | `False` | Skip actual detection (for testing) |
+| `dry_run` | `bool` | `False` | Skip tracking and history (for testing) |
+| `use_async` | `bool` | `True` | Use async pipeline for parallel L1+L2 (5x speedup) |
 | `suppress` | `list \| None` | `None` | Rule patterns to suppress |
 
 **Returns:** `ScanPipelineResult`
@@ -97,6 +101,7 @@ def scan(
 
 ```python
 from raxe import Raxe
+from raxe.sdk.exceptions import SecurityException
 
 raxe = Raxe()
 
@@ -122,7 +127,7 @@ try:
         block_on_threat=True
     )
 except SecurityException as e:
-    print(f"Blocked: {e.message}")
+    print(f"Blocked: {e.result.severity}")
 ```
 
 ---

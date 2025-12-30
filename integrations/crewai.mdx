@@ -1,0 +1,220 @@
+---
+title: "CrewAI Integration"
+description: "Protect CrewAI multi-agent workflows with RAXE"
+---
+
+## Overview
+
+RAXE provides `RaxeCrewGuard` for automatic security scanning in CrewAI multi-agent applications. Scan agent messages, task outputs, tool calls, and inter-agent communications.
+
+## Installation
+
+```bash
+pip install raxe crewai
+```
+
+## Quick Start
+
+```python
+from crewai import Crew, Agent, Task
+from raxe import Raxe
+from raxe.sdk.integrations import RaxeCrewGuard
+
+# Create guard (default: log-only mode)
+guard = RaxeCrewGuard(Raxe())
+
+# Wrap a crew for automatic scanning
+protected_crew = guard.protect_crew(crew)
+result = protected_crew.kickoff()
+```
+
+## Using Callbacks
+
+Alternatively, use callbacks directly in your crew:
+
+```python
+from crewai import Crew, Agent, Task
+from raxe.sdk.integrations import RaxeCrewGuard
+
+guard = RaxeCrewGuard(Raxe())
+
+# Create agents
+researcher = Agent(
+    role="Researcher",
+    goal="Research AI topics",
+    backstory="Expert researcher",
+)
+
+writer = Agent(
+    role="Writer",
+    goal="Write articles",
+    backstory="Technical writer",
+)
+
+# Create tasks
+research_task = Task(
+    description="Research AI safety",
+    agent=researcher,
+)
+
+write_task = Task(
+    description="Write an article",
+    agent=writer,
+)
+
+# Create crew with RAXE callbacks
+crew = Crew(
+    agents=[researcher, writer],
+    tasks=[research_task, write_task],
+    step_callback=guard.step_callback,
+    task_callback=guard.task_callback,
+)
+
+result = crew.kickoff()
+```
+
+## Configuration
+
+```python
+from raxe.sdk.integrations.crewai import CrewGuardConfig, ScanMode
+
+# Blocking mode for high-severity threats
+config = CrewGuardConfig(
+    mode=ScanMode.BLOCK_ON_HIGH,  # Block HIGH and CRITICAL
+    scan_step_outputs=True,
+    scan_task_outputs=True,
+    scan_tool_inputs=True,
+    scan_tool_outputs=True,
+    scan_agent_thoughts=True,
+    wrap_tools=True,  # Auto-wrap tools for scanning
+)
+
+guard = RaxeCrewGuard(Raxe(), config=config)
+```
+
+### Available Modes
+
+| Mode | Description |
+|------|-------------|
+| `ScanMode.LOG_ONLY` | Log threats, allow execution (default) |
+| `ScanMode.BLOCK_ON_THREAT` | Block any detected threat |
+| `ScanMode.BLOCK_ON_HIGH` | Block HIGH and CRITICAL severity |
+| `ScanMode.BLOCK_ON_CRITICAL` | Block only CRITICAL severity |
+
+## Tool Scanning
+
+Automatically scan tool inputs and outputs:
+
+```python
+from crewai.tools import BaseTool
+from raxe.sdk.integrations.crewai import CrewGuardConfig, ScanMode
+
+config = CrewGuardConfig(
+    mode=ScanMode.BLOCK_ON_HIGH,
+    wrap_tools=True,  # Enable automatic tool wrapping
+    scan_tool_inputs=True,
+    scan_tool_outputs=True,
+)
+
+guard = RaxeCrewGuard(Raxe(), config=config)
+
+# Wrap individual tools
+wrapped_tool = guard.wrap_tool(my_tool)
+
+# Or wrap all tools in a list
+wrapped_tools = guard.wrap_tools([tool1, tool2, tool3])
+```
+
+## Threat Callbacks
+
+Handle detected threats with custom callbacks:
+
+```python
+def on_threat_detected(message: str, result):
+    print(f"Threat: {result.severity}")
+    send_alert(f"CrewAI threat detected: {result.severity}")
+
+def on_blocked(message: str, result):
+    print(f"Blocked: {message[:50]}...")
+    log_security_event(result)
+
+config = CrewGuardConfig(
+    mode=ScanMode.BLOCK_ON_HIGH,
+    on_threat=on_threat_detected,
+    on_block=on_blocked,
+)
+```
+
+## Error Handling
+
+```python
+from raxe.sdk.exceptions import SecurityException
+
+try:
+    result = protected_crew.kickoff()
+except SecurityException as e:
+    print("Crew execution blocked for security reasons")
+    # Handle blocked execution
+```
+
+## Advanced Options
+
+```python
+config = CrewGuardConfig(
+    # What to scan
+    scan_step_outputs=True,
+    scan_task_outputs=True,
+    scan_tool_inputs=True,
+    scan_tool_outputs=True,
+    scan_agent_thoughts=True,
+    scan_crew_inputs=True,
+    scan_crew_outputs=True,
+
+    # Context options
+    include_agent_context=True,  # Include agent name/role
+    include_task_context=True,   # Include task description
+    max_thought_length=5000,     # Max thought length to scan
+
+    # Tool-specific
+    wrap_tools=False,
+    tool_scan_mode=ScanMode.BLOCK_ON_THREAT,  # Override for tools
+)
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Start with log-only mode">
+    Monitor threats before enabling blocking:
+    ```python
+    # Default: log-only (safe for production)
+    guard = RaxeCrewGuard(Raxe())
+    ```
+  </Accordion>
+  <Accordion title="Wrap tools for comprehensive coverage">
+    Enable tool wrapping for full protection:
+    ```python
+    config = CrewGuardConfig(wrap_tools=True)
+    guard = RaxeCrewGuard(Raxe(), config=config)
+    ```
+  </Accordion>
+  <Accordion title="Use appropriate blocking threshold">
+    Choose blocking threshold based on risk tolerance:
+    ```python
+    # Strict: Block any threat
+    config = CrewGuardConfig(mode=ScanMode.BLOCK_ON_THREAT)
+
+    # Balanced: Block HIGH and above
+    config = CrewGuardConfig(mode=ScanMode.BLOCK_ON_HIGH)
+
+    # Minimal: Block only CRITICAL
+    config = CrewGuardConfig(mode=ScanMode.BLOCK_ON_CRITICAL)
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Supported Versions
+
+| CrewAI Version | Status |
+|----------------|--------|
+| crewai >= 0.28.0 | Supported |

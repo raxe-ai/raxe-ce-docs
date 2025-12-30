@@ -1,0 +1,319 @@
+---
+title: "Portkey Integration"
+description: "Use RAXE as a guardrail in Portkey AI Gateway"
+---
+
+## Overview
+
+RAXE integrates with [Portkey AI Gateway](https://portkey.ai) to provide security scanning as a custom webhook guardrail. Portkey is an AI gateway that routes requests to 200+ LLMs with built-in observability, caching, and guardrails.
+
+RAXE offers two integration patterns:
+
+| Pattern | Use Case |
+|---------|----------|
+| **Webhook Guardrail** | RAXE as a Portkey custom guardrail (Portkey calls RAXE) |
+| **Client Wrapper** | Scan locally before/after Portkey calls |
+
+## Installation
+
+```bash
+pip install raxe portkey-ai
+```
+
+## Option 1: Webhook Guardrail
+
+Use RAXE as a custom webhook guardrail that Portkey calls for input/output validation.
+
+### Create the Webhook Endpoint
+
+```python
+from fastapi import FastAPI, Request
+from raxe import Raxe
+from raxe.sdk.integrations.portkey import RaxePortkeyWebhook
+
+app = FastAPI()
+
+# Create webhook handler (default: log-only mode)
+webhook = RaxePortkeyWebhook(Raxe())
+
+@app.post("/raxe/guardrail")
+async def raxe_guardrail(request: Request):
+    data = await request.json()
+    return webhook.handle_request(data)
+```
+
+### Configure Portkey
+
+Add RAXE as a webhook guardrail in your Portkey config:
+
+```json
+{
+  "beforeRequestHooks": [{
+    "id": "raxe-security",
+    "type": "guardrail",
+    "checks": [{
+      "id": "default.webhook",
+      "parameters": {
+        "webhookURL": "https://your-endpoint/raxe/guardrail",
+        "headers": {
+          "Authorization": "Bearer YOUR_API_KEY"
+        }
+      }
+    }],
+    "deny": true
+  }]
+}
+```
+
+### Blocking Mode
+
+Enable blocking to return `verdict: false` on threats:
+
+```python
+from raxe.sdk.integrations.portkey import (
+    RaxePortkeyWebhook,
+    PortkeyGuardConfig,
+)
+
+config = PortkeyGuardConfig(
+    block_on_threats=True,           # Return false verdict on threats
+    block_severity_threshold="HIGH", # Block HIGH and CRITICAL
+)
+
+webhook = RaxePortkeyWebhook(Raxe(), config=config)
+```
+
+### Response Format
+
+RAXE returns Portkey-compatible verdicts:
+
+```json
+{
+  "verdict": true,
+  "data": {
+    "reason": "No threats detected",
+    "detections": 0,
+    "scan_duration_ms": 5.2
+  }
+}
+```
+
+When threats are detected (with blocking enabled):
+
+```json
+{
+  "verdict": false,
+  "data": {
+    "reason": "Threat detected",
+    "severity": "HIGH",
+    "detections": 1,
+    "rule_ids": ["pi-001"],
+    "scan_duration_ms": 8.3
+  }
+}
+```
+
+## Option 2: Client Wrapper
+
+Scan requests locally before they go through Portkey:
+
+```python
+from portkey_ai import Portkey
+from raxe import Raxe
+from raxe.sdk.integrations.portkey import RaxePortkeyGuard
+
+# Create guard (default: log-only mode)
+guard = RaxePortkeyGuard(Raxe())
+
+# Wrap Portkey client
+client = guard.wrap_client(
+    Portkey(api_key="PORTKEY_API_KEY", virtual_key="VIRTUAL_KEY")
+)
+
+# All calls are automatically scanned
+response = client.chat.completions.create(
+    messages=[{"role": "user", "content": "Hello, how are you?"}],
+    model="gpt-4"
+)
+```
+
+### Blocking Mode
+
+```python
+guard = RaxePortkeyGuard(Raxe(), block_on_threats=True)
+client = guard.wrap_client(Portkey(api_key="..."))
+
+# Raises SecurityException if threat detected
+response = client.chat.completions.create(
+    messages=[{"role": "user", "content": user_input}],
+    model="gpt-4"
+)
+```
+
+### Direct Scan and Call
+
+For more control, use `scan_and_call`:
+
+```python
+from portkey_ai import Portkey
+from raxe.sdk.integrations.portkey import RaxePortkeyGuard
+
+guard = RaxePortkeyGuard(block_on_threats=True)
+client = Portkey(api_key="...", virtual_key="...")
+
+# Scan before calling
+response = guard.scan_and_call(
+    client.chat.completions.create,
+    messages=[{"role": "user", "content": user_input}],
+    model="gpt-4"
+)
+```
+
+## Configuration
+
+```python
+from raxe.sdk.integrations.portkey import PortkeyGuardConfig
+
+config = PortkeyGuardConfig(
+    # Blocking behavior
+    block_on_threats=True,           # Return false verdict / raise exception
+    block_severity_threshold="HIGH", # "LOW", "MEDIUM", "HIGH", "CRITICAL"
+
+    # What to scan
+    scan_inputs=True,   # Scan input messages (beforeRequest)
+    scan_outputs=True,  # Scan responses (afterRequest)
+
+    # Response details
+    include_scan_details=True,  # Include severity, rule_ids in response
+
+    # Error handling
+    fail_open=True,  # Pass on errors (matches Portkey's timeout behavior)
+)
+```
+
+## Error Handling
+
+```python
+from raxe.sdk.exceptions import SecurityException
+
+try:
+    response = client.chat.completions.create(
+        messages=[{"role": "user", "content": user_input}],
+        model="gpt-4"
+    )
+except SecurityException as e:
+    print("Request blocked for security reasons")
+```
+
+## Statistics
+
+Track scanning statistics:
+
+```python
+# Webhook stats
+print(webhook.stats)
+# {'total_requests': 100, 'threats_detected': 5, 'verdicts_false': 3}
+
+# Guard stats
+print(guard.stats)
+# {'total_scans': 50, 'threats_detected': 2, 'threats_blocked': 2}
+
+# Reset stats
+guard.reset_stats()
+```
+
+## Flask Integration
+
+```python
+from flask import Flask, request, jsonify
+from raxe.sdk.integrations.portkey import RaxePortkeyWebhook
+
+app = Flask(__name__)
+webhook = RaxePortkeyWebhook()
+
+@app.route("/raxe/guardrail", methods=["POST"])
+def raxe_guardrail():
+    data = request.get_json()
+    return jsonify(webhook.handle_request(data))
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Start with log-only mode">
+    Monitor threats before enabling blocking:
+    ```python
+    # Default: log-only (always returns true verdict)
+    webhook = RaxePortkeyWebhook()
+    ```
+  </Accordion>
+  <Accordion title="Use appropriate severity threshold">
+    Choose blocking threshold based on risk tolerance:
+    ```python
+    # Strict: Block any threat
+    config = PortkeyGuardConfig(
+        block_on_threats=True,
+        block_severity_threshold="LOW"
+    )
+
+    # Balanced: Block HIGH and above
+    config = PortkeyGuardConfig(
+        block_on_threats=True,
+        block_severity_threshold="HIGH"
+    )
+
+    # Minimal: Block only CRITICAL
+    config = PortkeyGuardConfig(
+        block_on_threats=True,
+        block_severity_threshold="CRITICAL"
+    )
+    ```
+  </Accordion>
+  <Accordion title="Handle the 3-second timeout">
+    Portkey webhook requests timeout after 3 seconds. RAXE's `fail_open=True`
+    (default) returns a pass verdict if scanning takes too long or errors:
+    ```python
+    # Default: pass on timeout/error (matches Portkey behavior)
+    config = PortkeyGuardConfig(fail_open=True)
+
+    # Strict: fail on timeout/error
+    config = PortkeyGuardConfig(fail_open=False)
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Combining with Portkey Features
+
+RAXE works alongside Portkey's other features:
+
+```python
+from portkey_ai import Portkey
+from raxe.sdk.integrations.portkey import RaxePortkeyGuard
+
+guard = RaxePortkeyGuard(block_on_threats=True)
+
+# Portkey client with retries and fallbacks
+client = guard.wrap_client(
+    Portkey(
+        api_key="PORTKEY_API_KEY",
+        virtual_key="OPENAI_VIRTUAL_KEY",
+        config={
+            "retry": {"attempts": 3},
+            "fallback": [{"virtual_key": "ANTHROPIC_VIRTUAL_KEY"}]
+        }
+    )
+)
+
+# RAXE scans, then Portkey handles routing/retries
+response = client.chat.completions.create(
+    messages=[{"role": "user", "content": "Hello"}],
+    model="gpt-4"
+)
+```
+
+## Supported Versions
+
+| Package | Version |
+|---------|---------|
+| portkey-ai | >= 1.0.0 |
+| raxe | >= 0.3.0 |

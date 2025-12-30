@@ -3,6 +3,78 @@ title: "Changelog"
 description: "What's new in RAXE Community Edition"
 ---
 
+## v0.4.0 - December 30, 2025
+
+### Agentic Framework Integrations
+
+First-class support for the most popular agentic AI frameworks.
+
+<CardGroup cols={2}>
+  <Card title="LangChain" icon="link" href="/integrations/langchain">
+    Callback handler for chains, agents, and RAG pipelines
+  </Card>
+  <Card title="CrewAI" icon="users" href="/integrations/crewai">
+    Multi-agent workflow protection with step/task callbacks
+  </Card>
+  <Card title="AutoGen" icon="robot" href="/integrations/autogen">
+    Conversation guard for multi-agent scenarios
+  </Card>
+  <Card title="LlamaIndex" icon="database" href="/integrations/llamaindex">
+    RAG pipeline and agent protection
+  </Card>
+  <Card title="Portkey" icon="gateway" href="/integrations/portkey">
+    AI Gateway webhook guardrail integration
+  </Card>
+</CardGroup>
+
+#### Added
+
+- **LangChain Integration** - `RaxeCallbackHandler` with tool policy support
+- **CrewAI Integration** - `RaxeCrewGuard` with step/task callbacks
+- **AutoGen Integration** - `RaxeConversationGuard` with agent registration
+- **LlamaIndex Integration** - `RaxeLlamaIndexCallback` with instrumentation API
+- **Portkey Integration** - `RaxePortkeyWebhook` and `RaxePortkeyGuard`
+- **Core AgentScanner** - Unified scanning engine with `ScanMode` enum
+- **Convenience Imports** - All integrations from `raxe.sdk.integrations`
+
+#### Quick Start
+
+```python
+# LangChain
+from raxe.sdk.integrations import RaxeCallbackHandler
+llm = ChatOpenAI(callbacks=[RaxeCallbackHandler()])
+
+# CrewAI
+from raxe.sdk.integrations import RaxeCrewGuard
+guard = RaxeCrewGuard()
+crew = Crew(step_callback=guard.step_callback)
+
+# AutoGen
+from raxe.sdk.integrations import RaxeConversationGuard
+guard = RaxeConversationGuard()
+guard.register(assistant)
+
+# LlamaIndex
+from raxe.sdk.integrations import RaxeLlamaIndexCallback
+Settings.callback_manager = CallbackManager([RaxeLlamaIndexCallback()])
+
+# Portkey
+from raxe.sdk.integrations import RaxePortkeyWebhook
+webhook = RaxePortkeyWebhook()
+```
+
+---
+
+## v0.3.1 - December 28, 2025
+
+### Security & Documentation
+
+- Fixed ReDoS vulnerability in pattern matching
+- Fixed tarball path traversal vulnerability
+- Updated README with L1/L2 detection badges
+
+---
+
 ## v0.2.0 - December 20, 2025
 
 ### Suppression System v1.0

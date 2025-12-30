@@ -1,0 +1,184 @@
+---
+title: "LlamaIndex Integration"
+description: "Protect LlamaIndex RAG pipelines and agents with RAXE"
+---
+
+## Overview
+
+RAXE integrates with LlamaIndex to automatically scan queries, prompts, and responses in your RAG pipelines and agents.
+
+## Installation
+
+```bash
+pip install raxe llama-index-core
+```
+
+## Quick Start
+
+```python
+from llama_index.core import VectorStoreIndex, Settings
+from llama_index.core.callbacks import CallbackManager
+from raxe import Raxe
+from raxe.sdk.integrations import RaxeLlamaIndexCallback
+
+# Initialize RAXE
+raxe = Raxe()
+
+# Create callback handler (default: log-only mode)
+raxe_callback = RaxeLlamaIndexCallback(raxe_client=raxe)
+
+# Configure LlamaIndex
+callback_manager = CallbackManager([raxe_callback])
+Settings.callback_manager = callback_manager
+
+# Create and query index
+index = VectorStoreIndex.from_documents(documents)
+query_engine = index.as_query_engine()
+
+# Queries are automatically scanned
+response = query_engine.query("What are the key findings?")
+```
+
+## Configuration
+
+```python
+# Blocking mode for queries
+callback = RaxeLlamaIndexCallback(
+    raxe_client=raxe,
+    block_on_query_threats=True,     # Block on input threats
+    block_on_response_threats=False,  # Log-only for responses
+    scan_agent_actions=True,          # Scan agent tool inputs
+)
+```
+
+## Specialized Callbacks
+
+### Query Engine Callback
+
+Optimized for RAG pipelines:
+
+```python
+from raxe.sdk.integrations import RaxeQueryEngineCallback
+
+callback = RaxeQueryEngineCallback(
+    raxe_client=raxe,
+    block_on_threats=True,  # Block on any threats
+)
+```
+
+### Agent Callback
+
+Optimized for LlamaIndex agents:
+
+```python
+from raxe.sdk.integrations import RaxeAgentCallback
+
+callback = RaxeAgentCallback(
+    raxe_client=raxe,
+    block_on_threats=True,
+    scan_tool_outputs=True,
+)
+```
+
+## Agent Integration
+
+```python
+from llama_index.core.agent import ReActAgent
+from llama_index.core.tools import FunctionTool
+from llama_index.core.callbacks import CallbackManager
+from raxe.sdk.integrations import RaxeAgentCallback
+
+# Create agent callback with blocking
+raxe_callback = RaxeAgentCallback(block_on_threats=True)
+callback_manager = CallbackManager([raxe_callback])
+
+# Define tools
+def calculate(expression: str) -> str:
+    return str(eval(expression))
+
+calc_tool = FunctionTool.from_defaults(fn=calculate)
+
+# Create agent
+agent = ReActAgent.from_tools(
+    tools=[calc_tool],
+    callback_manager=callback_manager,
+    verbose=True,
+)
+
+# Agent interactions are scanned
+response = agent.chat("Calculate 2 + 2")
+```
+
+## Instrumentation API (v0.10.20+)
+
+For more granular control, use the instrumentation handler:
+
+```python
+from llama_index.core.instrumentation import get_dispatcher
+from raxe.sdk.integrations import RaxeSpanHandler
+
+# Create span handler
+span_handler = RaxeSpanHandler(
+    block_on_threats=False,  # Log only
+    scan_llm_inputs=True,
+    scan_llm_outputs=True,
+)
+
+# Register with root dispatcher
+root_dispatcher = get_dispatcher()
+root_dispatcher.add_span_handler(span_handler)
+
+# All operations now traced and scanned
+```
+
+## Error Handling
+
+```python
+from raxe.sdk.exceptions import SecurityException
+
+try:
+    response = query_engine.query("Potentially malicious query")
+except SecurityException as e:
+    print("Query blocked for security reasons")
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Start with log-only mode">
+    Monitor threats before enabling blocking:
+    ```python
+    # Default: log-only (no blocking)
+    callback = RaxeLlamaIndexCallback(raxe_client=raxe)
+    ```
+  </Accordion>
+  <Accordion title="Use specialized callbacks">
+    Choose the right callback for your use case:
+    ```python
+    # For RAG pipelines
+    callback = RaxeQueryEngineCallback(raxe_client=raxe)
+
+    # For agents
+    callback = RaxeAgentCallback(raxe_client=raxe)
+    ```
+  </Accordion>
+  <Accordion title="Handle blocking gracefully">
+    Always catch `SecurityException`:
+    ```python
+    from raxe.sdk.exceptions import SecurityException
+
+    try:
+        response = query_engine.query(user_input)
+    except SecurityException:
+        return "I can't process that request."
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Supported Versions
+
+| LlamaIndex Version | Callback API | Instrumentation API |
+|--------------------|--------------|---------------------|
+| 0.10.0 - 0.10.19 | Supported | Not available |
+| 0.10.20+ | Supported | Supported |
+| 0.11.x | Supported | Recommended |

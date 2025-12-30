@@ -15,19 +15,15 @@ pip install raxe langchain
 
 ## Callback Handler
 
-Use the RAXE callback handler to scan inputs and outputs:
+Use the RAXE callback handler to scan prompts and responses:
 
 ```python
 from langchain_openai import ChatOpenAI
 from langchain.schema import HumanMessage
 from raxe.sdk.integrations.langchain import RaxeCallbackHandler
 
-# Create callback handler
-handler = RaxeCallbackHandler(
-    scan_inputs=True,
-    scan_outputs=True,
-    block_on_threat=True
-)
+# Create callback handler (default: log-only mode)
+handler = RaxeCallbackHandler()
 
 # Use with LangChain
 llm = ChatOpenAI(
@@ -42,17 +38,22 @@ response = llm.invoke([HumanMessage(content="Hello, how are you?")])
 ## Configuration Options
 
 ```python
+from raxe.sdk.agent_scanner import ToolPolicy
+
 handler = RaxeCallbackHandler(
+    # Blocking behavior (default: log-only, no blocking)
+    block_on_prompt_threats=True,    # Block if prompt threat detected
+    block_on_response_threats=True,  # Block if response threat detected
+
     # What to scan
-    scan_inputs=True,       # Scan user inputs
-    scan_outputs=True,      # Scan LLM outputs
+    scan_tools=True,           # Scan tool inputs/outputs (default: True)
+    scan_agent_actions=True,   # Scan agent actions (default: True)
 
-    # Threat response
-    block_on_threat=True,   # Block if threat detected
-    min_severity="HIGH",    # Minimum severity to block
+    # Tool restrictions
+    tool_policy=ToolPolicy.block_tools("shell", "file_write"),
 
-    # Logging
-    log_scans=True,         # Log all scans
+    # Optional threat callback
+    on_threat=lambda result: print(f"Threat: {result.severity}"),
 )
 ```
 
@@ -64,8 +65,8 @@ from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from raxe.sdk.integrations.langchain import RaxeCallbackHandler
 
-# Setup
-handler = RaxeCallbackHandler(block_on_threat=True)
+# Setup - blocking mode for prompts
+handler = RaxeCallbackHandler(block_on_prompt_threats=True)
 llm = ChatOpenAI(model="gpt-4")
 
 prompt = PromptTemplate(
@@ -90,12 +91,12 @@ from langchain.agents import create_react_agent, AgentExecutor
 from langchain_openai import ChatOpenAI
 from langchain import hub
 from raxe.sdk.integrations.langchain import RaxeCallbackHandler
+from raxe.sdk.agent_scanner import ToolPolicy
 
-# Create handler
+# Create handler with tool restrictions
 handler = RaxeCallbackHandler(
-    block_on_threat=True,
-    scan_inputs=True,
-    scan_outputs=True
+    block_on_prompt_threats=True,
+    tool_policy=ToolPolicy.block_tools("shell", "execute_command"),
 )
 
 # Setup agent
@@ -126,9 +127,8 @@ from raxe.sdk.integrations.langchain import RaxeCallbackHandler
 
 # Create handler with RAG focus
 handler = RaxeCallbackHandler(
-    scan_inputs=True,
-    scan_outputs=True,
-    block_on_threat=True
+    block_on_prompt_threats=True,
+    block_on_response_threats=True,
 )
 
 # Setup RAG chain
@@ -149,59 +149,78 @@ result = qa_chain.invoke({"query": "What are our policies?"})
 ## Error Handling
 
 ```python
-from raxe.exceptions import RaxeBlockedError
+from raxe.sdk.exceptions import SecurityException
+from raxe.sdk.integrations.langchain import RaxeCallbackHandler
 
-handler = RaxeCallbackHandler(block_on_threat=True)
+handler = RaxeCallbackHandler(block_on_prompt_threats=True)
 
 try:
     result = chain.run(question=user_input)
-except RaxeBlockedError as e:
-    print(f"Blocked: {e.scan_result.highest_severity}")
-    print(f"Detections: {len(e.scan_result.detections)}")
+except SecurityException as e:
+    print(f"Blocked due to security threat")
+    # Handle blocked request appropriately
 ```
 
-## Async Support
+## Tool Policy
+
+Restrict which tools agents can use:
 
 ```python
-from raxe.sdk.integrations.langchain import AsyncRaxeCallbackHandler
+from raxe.sdk.agent_scanner import ToolPolicy
+from raxe.sdk.integrations.langchain import RaxeCallbackHandler
 
-handler = AsyncRaxeCallbackHandler(
-    block_on_threat=True
+# Block specific dangerous tools
+handler = RaxeCallbackHandler(
+    tool_policy=ToolPolicy.block_tools("shell", "file_write", "execute_code")
 )
 
-# Use with async chains
-result = await chain.ainvoke({"question": "Hello"})
+# Or only allow specific tools
+handler = RaxeCallbackHandler(
+    tool_policy=ToolPolicy.allow_tools("search", "calculator", "weather")
+)
 ```
 
 ## Best Practices
 
 <AccordionGroup>
-  <Accordion title="Scan both inputs and outputs">
-    Enable both `scan_inputs` and `scan_outputs` for comprehensive protection:
+  <Accordion title="Start with log-only mode">
+    Begin with monitoring before enabling blocking:
     ```python
+    # Default: log-only (no blocking)
+    handler = RaxeCallbackHandler()
+
+    # Later, enable blocking after tuning
     handler = RaxeCallbackHandler(
-        scan_inputs=True,   # Catch injection attempts
-        scan_outputs=True   # Catch jailbreak responses
+        block_on_prompt_threats=True,
+        block_on_response_threats=True,
     )
     ```
   </Accordion>
-  <Accordion title="Set appropriate severity thresholds">
-    Adjust `min_severity` based on your risk tolerance:
+  <Accordion title="Use tool policies for agents">
+    Restrict dangerous tools to prevent security issues:
     ```python
-    # Strict: Block on any threat
-    handler = RaxeCallbackHandler(min_severity="LOW")
-
-    # Lenient: Only block critical threats
-    handler = RaxeCallbackHandler(min_severity="CRITICAL")
+    handler = RaxeCallbackHandler(
+        tool_policy=ToolPolicy.block_tools("shell", "file_write")
+    )
     ```
   </Accordion>
   <Accordion title="Handle blocked requests gracefully">
-    Always catch `RaxeBlockedError` for user-friendly responses:
+    Always catch `SecurityException` for user-friendly responses:
     ```python
+    from raxe.sdk.exceptions import SecurityException
+
     try:
         result = chain.run(user_input)
-    except RaxeBlockedError:
+    except SecurityException:
         return "I can't process that request."
     ```
   </Accordion>
 </AccordionGroup>
+
+## Supported LangChain Versions
+
+| LangChain Version | Status |
+|-------------------|--------|
+| 0.1.x | Supported |
+| 0.2.x | Supported |
+| 0.3.x | Supported |

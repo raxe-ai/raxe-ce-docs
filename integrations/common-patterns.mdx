@@ -364,7 +364,8 @@ async def scan_dataset(prompts: list[str]) -> dict:
 Consistent error handling across your application:
 
 ```python
-from raxe import Raxe, SecurityException, RaxeError
+from raxe import Raxe
+from raxe.sdk.exceptions import SecurityException, RaxeException
 
 raxe = Raxe()
 
@@ -381,12 +382,12 @@ def safe_scan(prompt: str) -> dict:
         # Threat was detected and blocked
         return {
             "safe": False,
-            "severity": e.severity,
-            "rule_id": e.rule_id,
+            "severity": e.result.severity,
+            "detections": e.result.total_detections,
             "message": str(e)
         }
 
-    except RaxeError as e:
+    except RaxeException as e:
         # Other RAXE errors (config, validation, etc.)
         return {
             "error": True,

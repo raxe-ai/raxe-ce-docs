@@ -1,0 +1,176 @@
+---
+title: "AutoGen Integration"
+description: "Protect multi-agent AutoGen conversations with RAXE"
+---
+
+## Overview
+
+RAXE provides `RaxeConversationGuard` for automatic security scanning of AutoGen multi-agent conversations. The integration uses AutoGen's hook system to intercept messages without modifying your agent code.
+
+## Installation
+
+```bash
+pip install raxe pyautogen
+# or
+pip install raxe autogen-agentchat
+```
+
+## Quick Start
+
+```python
+from autogen import AssistantAgent, UserProxyAgent
+from raxe import Raxe
+from raxe.sdk.integrations import RaxeConversationGuard
+
+# Create RAXE client
+raxe = Raxe()
+
+# Create conversation guard (default: log-only mode)
+guard = RaxeConversationGuard(raxe)
+
+# Create AutoGen agents
+llm_config = {"model": "gpt-4", "api_key": "..."}
+assistant = AssistantAgent("assistant", llm_config=llm_config)
+user = UserProxyAgent("user", code_execution_config={"use_docker": False})
+
+# Register agents with guard
+guard.register(assistant)
+guard.register(user)
+
+# Start conversation - all messages are automatically scanned
+user.initiate_chat(assistant, message="Hello! How are you?")
+```
+
+## Configuration
+
+```python
+from raxe.sdk.agent_scanner import AgentScannerConfig
+
+# Block on HIGH or CRITICAL threats
+config = AgentScannerConfig(
+    on_threat="block",  # "log" (default) or "block"
+    block_severity_threshold="HIGH",  # "LOW", "MEDIUM", "HIGH", "CRITICAL"
+    scan_prompts=True,
+    scan_tool_calls=True,
+    scan_tool_results=False,  # Disable tool result scanning for performance
+)
+
+guard = RaxeConversationGuard(raxe, config=config)
+```
+
+## Multi-Agent Scenarios
+
+### Register Multiple Agents
+
+```python
+# Create agents
+researcher = AssistantAgent("researcher", llm_config=llm_config)
+writer = AssistantAgent("writer", llm_config=llm_config)
+critic = AssistantAgent("critic", llm_config=llm_config)
+user = UserProxyAgent("user")
+
+# Register all at once
+guard.register_all(researcher, writer, critic, user)
+```
+
+### GroupChat
+
+```python
+from autogen import GroupChat, GroupChatManager
+
+# Create and register agents
+agents = [researcher, writer, critic]
+for agent in agents:
+    guard.register(agent)
+
+# Create group chat
+groupchat = GroupChat(agents=agents, messages=[], max_round=10)
+manager = GroupChatManager(groupchat=groupchat, llm_config=llm_config)
+
+# Register manager too
+guard.register(manager)
+
+# Start protected chat
+user.initiate_chat(manager, message="Research AI safety")
+```
+
+## Error Handling
+
+```python
+from raxe.sdk.exceptions import SecurityException
+
+try:
+    user.initiate_chat(assistant, message=user_input)
+except SecurityException as e:
+    print("Message blocked for security reasons")
+```
+
+## Callbacks
+
+```python
+def on_threat_detected(result):
+    print(f"Threat detected: {result.severity}")
+
+config = AgentScannerConfig(
+    on_threat="block",
+    on_threat_callback=on_threat_detected,
+)
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Start with log-only mode">
+    Monitor threats before enabling blocking:
+    ```python
+    # Default: log-only
+    guard = RaxeConversationGuard(raxe)
+    ```
+  </Accordion>
+  <Accordion title="Register all conversation participants">
+    Ensure all agents are protected:
+    ```python
+    guard.register_all(assistant, user, manager)
+    ```
+  </Accordion>
+  <Accordion title="Handle blocking gracefully">
+    Catch exceptions for user-friendly responses:
+    ```python
+    from raxe.sdk.exceptions import SecurityException
+
+    try:
+        user.initiate_chat(assistant, message=user_input)
+    except SecurityException:
+        print("Request blocked for security reasons")
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## AutoGen v0.4+ (Wrapper-based)
+
+For AutoGen v0.4+ which uses the async message-based API, use `wrap_agent()`:
+
+```python
+from autogen_agentchat.agents import AssistantAgent
+from raxe import Raxe
+from raxe.sdk.integrations import RaxeConversationGuard
+
+# Create RAXE guard
+raxe = Raxe()
+guard = RaxeConversationGuard(raxe)
+
+# Create agent and wrap with RAXE
+assistant = AssistantAgent("assistant", model_client=client)
+protected = guard.wrap_agent(assistant)
+
+# Use protected agent - messages will be scanned
+```
+
+## Supported Versions
+
+| AutoGen Version | API Style | Status |
+|-----------------|-----------|--------|
+| pyautogen 0.2.x | Hook-based (`register()`) | Supported |
+| autogen-agentchat ~= 0.2 | Hook-based (`register()`) | Supported |
+| autogen-agentchat 0.4.x+ | Wrapper-based (`wrap_agent()`) | Supported |
+| AG2 (fork) | Hook-based | Compatible |
