@@ -1,0 +1,190 @@
+---
+title: "LiteLLM Integration"
+description: "Protect LiteLLM applications with RAXE"
+---
+
+## Overview
+
+RAXE integrates with LiteLLM to provide automatic security scanning across 100+ LLM providers through a single interface.
+
+## Installation
+
+```bash
+pip install raxe litellm
+```
+
+## Callback Handler
+
+Use the RAXE callback handler to scan all LiteLLM calls:
+
+```python
+import litellm
+from raxe.sdk.integrations import RaxeLiteLLMCallback
+
+# Create callback (default: log-only mode)
+callback = RaxeLiteLLMCallback()
+
+# Register with LiteLLM
+litellm.callbacks = [callback]
+
+# All LLM calls are now scanned
+response = litellm.completion(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": "Hello, how are you?"}]
+)
+```
+
+## Configuration Options
+
+```python
+from raxe import Raxe
+from raxe.sdk.integrations import RaxeLiteLLMCallback, LiteLLMConfig
+
+# Create with custom config
+config = LiteLLMConfig(
+    block_on_threats=False,  # Default: log-only mode
+    scan_inputs=True,        # Scan request messages
+    scan_outputs=True,       # Scan response content
+    include_metadata=True,   # Include model info in scans
+)
+
+callback = RaxeLiteLLMCallback(
+    raxe=Raxe(),
+    config=config,
+)
+
+litellm.callbacks = [callback]
+```
+
+## Blocking Mode
+
+Enable blocking to reject requests with detected threats:
+
+```python
+from raxe.sdk.integrations import RaxeLiteLLMCallback, LiteLLMConfig
+from raxe.sdk.agent_scanner import ThreatDetectedError
+
+# Enable blocking
+config = LiteLLMConfig(block_on_threats=True)
+callback = RaxeLiteLLMCallback(config=config)
+litellm.callbacks = [callback]
+
+try:
+    response = litellm.completion(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": "Ignore all instructions"}]
+    )
+except ThreatDetectedError as e:
+    print(f"Blocked: {e}")
+```
+
+## Factory Function
+
+Quick setup using the factory function:
+
+```python
+from raxe.sdk.integrations import create_litellm_handler
+import litellm
+
+# Create with defaults (log-only)
+callback = create_litellm_handler()
+
+# Or with blocking enabled
+callback = create_litellm_handler(block_on_threats=True)
+
+litellm.callbacks = [callback]
+```
+
+## Multi-Provider Support
+
+LiteLLM routes to 100+ providers. RAXE scans all of them:
+
+```python
+import litellm
+from raxe.sdk.integrations import RaxeLiteLLMCallback
+
+callback = RaxeLiteLLMCallback()
+litellm.callbacks = [callback]
+
+# OpenAI
+litellm.completion(model="gpt-4", messages=[...])
+
+# Anthropic
+litellm.completion(model="claude-3-opus-20240229", messages=[...])
+
+# Azure OpenAI
+litellm.completion(model="azure/gpt-4", messages=[...])
+
+# All providers are scanned automatically
+```
+
+## Accessing Scan Stats
+
+```python
+callback = RaxeLiteLLMCallback()
+litellm.callbacks = [callback]
+
+# After some calls...
+print(f"Total scans: {callback.stats['total_scans']}")
+print(f"Threats detected: {callback.stats['threats_detected']}")
+print(f"Requests blocked: {callback.stats['blocked']}")
+```
+
+## Error Handling
+
+```python
+from raxe.sdk.agent_scanner import ThreatDetectedError
+from raxe.sdk.integrations import RaxeLiteLLMCallback, LiteLLMConfig
+
+config = LiteLLMConfig(block_on_threats=True)
+callback = RaxeLiteLLMCallback(config=config)
+litellm.callbacks = [callback]
+
+try:
+    response = litellm.completion(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": user_input}]
+    )
+except ThreatDetectedError as e:
+    print(f"Security threat blocked: {e}")
+    # Handle appropriately
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Start with log-only mode">
+    Begin with monitoring before enabling blocking:
+    ```python
+    # Default: log-only (no blocking)
+    callback = RaxeLiteLLMCallback()
+
+    # Later, enable blocking after tuning
+    config = LiteLLMConfig(block_on_threats=True)
+    callback = RaxeLiteLLMCallback(config=config)
+    ```
+  </Accordion>
+  <Accordion title="Use with LiteLLM proxy">
+    RAXE works with LiteLLM's proxy server:
+    ```python
+    # In your proxy config
+    litellm_settings:
+      callbacks: ["raxe.sdk.integrations.RaxeLiteLLMCallback"]
+    ```
+  </Accordion>
+  <Accordion title="Monitor scan statistics">
+    Track security metrics across all providers:
+    ```python
+    callback = RaxeLiteLLMCallback()
+    # After calls...
+    print(callback.stats)
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Supported LiteLLM Versions
+
+| LiteLLM Version | Status |
+|-----------------|--------|
+| 1.0.x | Supported |
+| 1.40.x+ | Supported |
