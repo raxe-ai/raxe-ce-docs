@@ -125,9 +125,9 @@ callback = RaxeLiteLLMCallback()
 litellm.callbacks = [callback]
 
 # After some calls...
-print(f"Total scans: {callback.stats['total_scans']}")
+print(f"Total calls: {callback.stats['total_calls']}")
 print(f"Threats detected: {callback.stats['threats_detected']}")
-print(f"Requests blocked: {callback.stats['blocked']}")
+print(f"Threats blocked: {callback.stats['threats_blocked']}")
 ```
 
 ## Error Handling
