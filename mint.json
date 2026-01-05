@@ -58,6 +58,18 @@
       ]
     },
     {
+      "group": "Agent Frameworks",
+      "pages": [
+        "integrations/langchain",
+        "integrations/crewai",
+        "integrations/autogen",
+        "integrations/llamaindex",
+        "integrations/litellm",
+        "integrations/dspy",
+        "integrations/portkey"
+      ]
+    },
+    {
       "group": "Core Concepts",
       "pages": [
         "concepts/detection-engine",
@@ -78,22 +90,15 @@
       ]
     },
     {
-      "group": "Rules",
+      "group": "Detection Rules",
       "pages": [
         "rules/overview",
         "rules/custom-rules"
       ]
     },
     {
-      "group": "Integrations",
+      "group": "CI/CD & Patterns",
       "pages": [
-        "integrations/langchain",
-        "integrations/crewai",
-        "integrations/autogen",
-        "integrations/llamaindex",
-        "integrations/litellm",
-        "integrations/dspy",
-        "integrations/portkey",
         "integrations/ci-cd",
         "integrations/common-patterns"
       ]
