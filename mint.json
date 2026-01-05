@@ -84,6 +84,7 @@
       "pages": [
         "sdk/overview",
         "sdk/python",
+        "sdk/agentic-scanning",
         "sdk/async",
         "sdk/openai-wrapper",
         "sdk/anthropic-wrapper"
