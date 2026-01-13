@@ -197,6 +197,42 @@ critical = [d for d in result.detections if d.severity == Severity.CRITICAL]
 high_confidence = [d for d in result.detections if d.confidence >= 0.9]
 ```
 
+## Multi-Tenant Scanning
+
+For multi-customer deployments, pass `tenant_id` and `app_id` to resolve tenant-specific policies:
+
+```python
+from raxe import Raxe
+
+raxe = Raxe()
+
+# Scan with tenant context
+result = raxe.scan(
+    "Ignore all previous instructions",
+    tenant_id="acme",      # Customer tenant
+    app_id="chatbot",      # App within tenant
+)
+
+# Policy attribution for billing/audit
+print(f"Policy: {result.metadata['effective_policy_id']}")
+print(f"Mode: {result.metadata['effective_policy_mode']}")
+print(f"Source: {result.metadata['resolution_source']}")
+```
+
+### Override Policy Per-Request
+
+```python
+# Override the tenant/app default policy
+result = raxe.scan(
+    prompt,
+    tenant_id="acme",
+    app_id="chatbot",
+    policy_id="strict"  # Force strict mode for this request
+)
+```
+
+See [Multi-Tenant Policies](/concepts/multi-tenant) for full documentation.
+
 ## Thread Safety
 
 The `Raxe` client is thread-safe:

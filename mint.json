@@ -75,6 +75,7 @@
         "concepts/detection-engine",
         "concepts/threat-families",
         "concepts/policies",
+        "concepts/multi-tenant",
         "concepts/suppressions",
         "concepts/architecture"
       ]

@@ -30,6 +30,21 @@ result = raxe.scan("text to scan")
 | `l2_duration_ms` | `float` | L2 processing time |
 | `text_hash` | `str` | SHA-256 hash of scanned text |
 | `policy_decision` | `BlockAction` | Policy action: ALLOW, WARN, BLOCK |
+| `metadata` | `dict` | Additional metadata (see below) |
+| `action_taken` | `str` | Action taken: "allow" or "block" |
+
+### Metadata (Multi-Tenant)
+
+When scanning with `tenant_id`/`app_id`, metadata includes policy attribution:
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `effective_policy_id` | `str` | Which policy was applied |
+| `effective_policy_mode` | `str` | Policy mode: "monitor", "balanced", "strict" |
+| `resolution_source` | `str` | Source: "request", "app", "tenant", "system_default" |
+| `tenant_id` | `str` | Tenant ID used |
+| `app_id` | `str` | App ID used |
+| `event_id` | `str` | Unique event ID for audit |
 
 ### Boolean Evaluation
 
@@ -63,6 +78,26 @@ if result.has_threats:
         print(f"  - {detection.rule_id}: {detection.severity}")
 else:
     print("Safe to proceed")
+```
+
+### Multi-Tenant Example
+
+```python
+result = raxe.scan(
+    "user input",
+    tenant_id="acme",
+    app_id="chatbot"
+)
+
+# Policy attribution for billing/audit
+print(f"Policy used: {result.metadata['effective_policy_id']}")
+print(f"Mode: {result.metadata['effective_policy_mode']}")
+print(f"Source: {result.metadata['resolution_source']}")
+print(f"Event ID: {result.metadata['event_id']}")
+
+# Check if blocked by policy
+if result.action_taken == "block":
+    print(f"Blocked by {result.metadata['effective_policy_id']}")
 ```
 
 ---

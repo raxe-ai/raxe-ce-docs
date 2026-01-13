@@ -60,6 +60,9 @@ def scan(
     self,
     text: str,
     *,
+    tenant_id: str | None = None,
+    app_id: str | None = None,
+    policy_id: str | None = None,
     customer_id: str | None = None,
     context: dict | None = None,
     block_on_threat: bool = False,
@@ -79,6 +82,9 @@ def scan(
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `text` | `str` | required | Text to scan |
+| `tenant_id` | `str \| None` | `None` | Tenant ID for multi-tenant policy resolution |
+| `app_id` | `str \| None` | `None` | App ID within tenant for policy resolution |
+| `policy_id` | `str \| None` | `None` | Override policy for this scan only |
 | `customer_id` | `str \| None` | `None` | Customer identifier for tracking |
 | `context` | `dict \| None` | `None` | Additional context metadata |
 | `block_on_threat` | `bool` | `False` | Raise SecurityException on threat |
@@ -128,6 +134,24 @@ try:
     )
 except SecurityException as e:
     print(f"Blocked: {e.result.severity}")
+
+# Multi-tenant scanning
+result = raxe.scan(
+    "user input",
+    tenant_id="acme",      # Resolves tenant's policy
+    app_id="chatbot",      # Uses app's policy if set
+)
+
+# Policy attribution in result
+print(result.metadata["effective_policy_id"])   # "strict"
+print(result.metadata["resolution_source"])     # "app"
+
+# Override policy for this scan
+result = raxe.scan(
+    "user input",
+    tenant_id="acme",
+    policy_id="strict"     # Force strict mode
+)
 ```
 
 ---

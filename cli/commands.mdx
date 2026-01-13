@@ -19,6 +19,9 @@ raxe scan "text to scan"
 | `--ci` | CI mode (JSON + exit code 1 on threats) |
 | `--explain` | Show detailed explanations |
 | `--rule` | Test specific rule only |
+| `--tenant` | Tenant ID for multi-tenant scanning |
+| `--app` | App ID within tenant |
+| `--policy` | Override policy for this scan |
 
 ### Examples
 
@@ -34,6 +37,12 @@ raxe scan "text" --ci
 
 # With explanations
 raxe scan "text" --explain
+
+# Multi-tenant scanning
+raxe scan "text" --tenant acme --app chatbot
+
+# Override policy
+raxe scan "text" --tenant acme --policy strict
 ```
 
 ---
@@ -243,6 +252,120 @@ raxe export --format json --output history.json
 
 ---
 
+## raxe tenant
+
+Manage tenants for multi-customer deployments.
+
+```bash
+raxe tenant <subcommand>
+```
+
+### Subcommands
+
+| Command | Description |
+|---------|-------------|
+| `create` | Create a new tenant |
+| `list` | List all tenants |
+| `show <id>` | Show tenant details |
+| `delete <id>` | Delete a tenant |
+
+### Examples
+
+```bash
+# Create a tenant
+raxe tenant create --name "Acme Corp" --id acme
+
+# Create with strict policy
+raxe tenant create --name "Security Team" --id security --policy strict
+
+# List tenants
+raxe tenant list
+raxe tenant list --output json
+
+# Delete tenant
+raxe tenant delete acme --force
+```
+
+---
+
+## raxe app
+
+Manage applications within tenants.
+
+```bash
+raxe app <subcommand>
+```
+
+### Subcommands
+
+| Command | Description |
+|---------|-------------|
+| `create` | Create a new app |
+| `list` | List apps for a tenant |
+| `show <id>` | Show app details |
+| `delete <id>` | Delete an app |
+
+### Examples
+
+```bash
+# Create an app
+raxe app create --tenant acme --name "Chatbot" --id chatbot
+
+# Create with strict policy
+raxe app create --tenant acme --name "Trading" --id trading --policy strict
+
+# List apps
+raxe app list --tenant acme
+
+# Show details
+raxe app show chatbot --tenant acme
+```
+
+---
+
+## raxe policy
+
+Manage security policies for tenants.
+
+```bash
+raxe policy <subcommand>
+```
+
+### Subcommands
+
+| Command | Description |
+|---------|-------------|
+| `list` | List available policies |
+| `set <policy>` | Set default policy |
+| `explain` | Show policy resolution |
+| `create` | Create custom policy |
+
+### Examples
+
+```bash
+# List policies (presets + custom)
+raxe policy list --tenant acme
+
+# Set tenant default
+raxe policy set balanced --tenant acme
+
+# Set app-specific policy
+raxe policy set strict --tenant acme --app trading
+
+# Explain resolution chain
+raxe policy explain --tenant acme --app trading
+```
+
+### Policy Modes
+
+| Mode | Behavior |
+|------|----------|
+| `monitor` | Never blocks, logs everything |
+| `balanced` | Blocks CRITICAL, HIGH with confidence ≥ 0.85 |
+| `strict` | Blocks CRITICAL, HIGH, and MEDIUM |
+
+---
+
 ## raxe suppress
 
 Manage suppression rules for false positives.
@@ -272,6 +395,10 @@ raxe suppress add pi-001 --reason "Known false positive in auth flow"
 # Add with expiration
 raxe suppress add "jb-*" --reason "Test suite" --expires 2025-06-01
 
+# Tenant-scoped suppression
+raxe suppress add pi-001 --tenant acme --reason "Tenant-specific false positive"
+raxe suppress list --tenant acme
+
 # Remove a suppression
 raxe suppress remove pi-001
 
@@ -286,6 +413,7 @@ raxe suppress audit
 | `--reason` | Required reason for the suppression |
 | `--expires` | Expiration date (ISO 8601 format) |
 | `--action` | Override action: `SUPPRESS`, `FLAG`, `LOG` |
+| `--tenant` | Tenant ID for tenant-scoped suppression |
 
 ---
 
