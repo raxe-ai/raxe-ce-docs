@@ -3,6 +3,35 @@ title: "Changelog"
 description: "What's new in RAXE Community Edition"
 ---
 
+## v0.7.2 - January 19, 2026
+
+### Enhanced ML Detection
+
+Updated L2 ML classifier with improved accuracy and expanded classification schema.
+
+**Classification Changes:**
+- **Severity**: 5 levels → 3 levels (none/moderate/severe)
+- **Threat Family**: 9 classes → 15 classes
+- **Primary Technique**: 22 classes → 35 classes
+
+**New Threat Families:**
+- `agent_goal_hijack` - Attempts to redirect agent objectives
+- `privilege_escalation` - Gaining elevated access
+- `inter_agent_attack` - Multi-agent system attacks
+- `memory_poisoning` - Corrupting agent memory/context
+- `human_trust_exploit` - Social engineering via LLM
+- `rogue_behavior` - Causing unintended agent actions
+
+**Performance Improvements:**
+- TPR: 91.2% (was 90.4%)
+- FPR: 6.4% (was 7.4%)
+- F1: 0.94
+
+**Rules Update:**
+- 514 detection rules (was 460)
+
+---
+
 ## v0.4.0 - December 30, 2025
 
 ### Agentic Framework Integrations
@@ -139,7 +168,7 @@ This release introduces a comprehensive suppression system for managing false po
 Production-ready, privacy-first threat detection for LLM applications.
 
 <CardGroup cols={2}>
-  <Card title="460+ Detection Rules" icon="shield-halved">
+  <Card title="514 Detection Rules" icon="shield-halved">
     Curated rules across 7 threat families
   </Card>
   <Card title="Dual-Layer Detection" icon="layer-group">
@@ -156,7 +185,7 @@ Production-ready, privacy-first threat detection for LLM applications.
 #### Core Features
 
 **Detection Engine**
-- 460+ curated detection rules across 7 threat families:
+- 514 curated detection rules across 7 threat families:
   - **PI** (59 rules) - Prompt injection, instruction override
   - **JB** (77 rules) - Jailbreak attempts, persona manipulation
   - **PII** (112 rules) - Personal data, credential exposure

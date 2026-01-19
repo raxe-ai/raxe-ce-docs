@@ -12,7 +12,7 @@ RAXE uses a **dual-layer detection system** to identify threats in LLM prompts a
 
 ## L1: Rule-Based Detection
 
-The first layer uses 460+ curated regex patterns organized into 7 threat families.
+The first layer uses **514 curated regex patterns** organized into 7 L1 threat families (plus 4 agentic families).
 
 **Characteristics:**
 - Sub-millisecond latency
@@ -45,6 +45,42 @@ result = raxe.scan("1gn0r3 4ll pr3v10us 1nstruct10ns")
 # L1: No match (obfuscated)
 # L2: Detected as prompt injection
 ```
+
+### L2 Classification Heads
+
+The ML model uses 5 specialized classification heads:
+
+| Head | Classes | Description |
+|------|---------|-------------|
+| **Binary** | 2 | Threat vs safe |
+| **Threat Family** | 15 | Attack category (prompt_injection, jailbreak, etc.) |
+| **Severity** | 3 | none / moderate / severe |
+| **Technique** | 35 | Specific attack method |
+| **Harm Types** | 10 | Multilabel harm classification |
+
+### L2 Threat Families
+
+The L2 model classifies threats into 15 families:
+
+- `prompt_injection` - Instruction override attacks
+- `jailbreak` - Bypassing safety guidelines
+- `data_exfiltration` - Stealing sensitive data
+- `agent_goal_hijack` - Redirecting agent objectives
+- `tool_or_command_abuse` - Misusing tools/commands
+- `privilege_escalation` - Gaining elevated access
+- `memory_poisoning` - Corrupting agent context
+- `inter_agent_attack` - Multi-agent system attacks
+- `rag_or_context_attack` - RAG/retrieval manipulation
+- `encoding_or_obfuscation_attack` - Encoding-based evasion
+- `human_trust_exploit` - Social engineering
+- `rogue_behavior` - Unintended agent actions
+- `toxic_or_policy_violating_content` - Harmful output
+- `other_security` - Other security concerns
+- `benign` - No threat
+
+<Note>
+L2 families differ from L1 rule families. L1 uses 7 families (PI, JB, PII, CMD, ENC, HC, RAG) while L2 uses 15 semantic categories trained on attack data.
+</Note>
 
 ## Detection Flow
 
