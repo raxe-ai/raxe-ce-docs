@@ -82,6 +82,21 @@ When the binary head detects a threat but the family classifier predicts "benign
 | `high_recall` | 90.8% | 7.6% | Catch more threats |
 | `low_fp` | 89.0% | 6.0% | Minimize false positives |
 
+#### Severity Mapping
+
+The L2 model outputs 3 severity classes (`none`, `moderate`, `severe`), but the API uses 5 levels for consistency with L1 rules. L2 confidence scores are mapped to severity using thresholds:
+
+| Confidence | Severity |
+|------------|----------|
+| >= 0.95 | CRITICAL |
+| >= 0.85 | HIGH |
+| >= 0.70 | MEDIUM |
+| >= 0.50 | LOW |
+| >= 0.30 | INFO |
+| < 0.30 | None (no detection) |
+
+When combining L1 and L2 results, the highest severity wins.
+
 ### L2 Threat Families
 
 The L2 model classifies threats into 15 families:

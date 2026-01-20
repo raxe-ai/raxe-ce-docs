@@ -147,11 +147,12 @@ Each L1 rule detection has a severity (5 levels):
 | HIGH | 3 | Block or flag |
 | MEDIUM | 2 | Flag for review |
 | LOW | 1 | Log only |
+| INFO | 0 | Informational |
 
 ```python
-if result.severity == "CRITICAL":
+if result.severity == "critical":
     block_request()
-elif result.severity == "HIGH":
+elif result.severity == "high":
     flag_for_review()
 ```
 
@@ -181,13 +182,17 @@ The L2 neural classifier uses **15 threat families** trained on real-world attac
 
 ### L2 Severity Levels
 
-L2 uses a **3-level severity scale**:
+The L2 model outputs **3 severity classes**:
 
 | Severity | Description | Action |
 |----------|-------------|--------|
 | `severe` | High-risk threat | Block immediately |
 | `moderate` | Medium-risk | Review or block |
 | `none` | No threat | Allow |
+
+<Note>
+L2 confidence scores are mapped to the 5-level API severity (CRITICAL → INFO) for consistency with L1. See [Detection Engine](/concepts/detection-engine#severity-mapping) for threshold details.
+</Note>
 
 ### L2 Techniques
 
