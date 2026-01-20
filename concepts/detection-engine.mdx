@@ -58,6 +58,30 @@ The ML model uses 5 specialized classification heads:
 | **Technique** | 35 | Specific attack method |
 | **Harm Types** | 10 | Multilabel harm classification |
 
+### L2 Voting Engine
+
+The ML model uses a **BinaryFirstEngine** voting system where the binary head (threat vs safe) is the primary decision maker, and other heads provide classification metadata.
+
+#### Decision Zones
+
+| Binary Probability | Zone | Default Decision |
+|-------------------|------|------------------|
+| >= 0.85 | HIGH_THREAT | THREAT (unless suppressed by 3-head quorum) |
+| 0.50 - 0.85 | MID_ZONE | Uses auxiliary heads for tiebreak |
+| < 0.50 | LOW_THREAT | SAFE |
+
+#### Uncategorized Threats
+
+When the binary head detects a threat but the family classifier predicts "benign" with low confidence (< 0.60), RAXE displays **"Uncategorized Threat"**. This indicates a novel attack pattern that doesn't fit known threat families.
+
+#### Voting Presets
+
+| Preset | TPR | FPR | Use Case |
+|--------|-----|-----|----------|
+| `balanced` (default) | 90.4% | 7.4% | General use |
+| `high_recall` | 90.8% | 7.6% | Catch more threats |
+| `low_fp` | 89.0% | 6.0% | Minimize false positives |
+
 ### L2 Threat Families
 
 The L2 model classifies threats into 15 families:
