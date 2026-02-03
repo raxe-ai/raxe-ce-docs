@@ -1,0 +1,175 @@
+---
+title: "Hugging Face Integration"
+description: "Protect Hugging Face pipelines with RAXE"
+---
+
+## Overview
+
+RAXE integrates with Hugging Face Transformers to provide automatic security scanning for local model pipelines.
+
+## Installation
+
+```bash
+pip install raxe transformers torch
+```
+
+## RaxePipeline Wrapper
+
+Use the RAXE pipeline wrapper for automatic scanning:
+
+```python
+from raxe.sdk.integrations import RaxePipeline
+
+# Wrap any Hugging Face pipeline
+pipe = RaxePipeline(
+    task="text-generation",
+    model="gpt2"
+)
+
+# All inputs and outputs are automatically scanned
+result = pipe("Once upon a time")
+```
+
+## Supported Pipelines
+
+| Task | Example Model | Scanning |
+|------|---------------|----------|
+| `text-generation` | gpt2, llama-2, mistral | Input + Output |
+| `text2text-generation` | t5-base, flan-t5 | Input + Output |
+| `conversational` | DialoGPT | Messages |
+| `question-answering` | distilbert-squad | Question + Context |
+| `summarization` | bart-large-cnn | Input + Summary |
+| `translation` | opus-mt-en-de | Input + Translation |
+
+## Configuration
+
+```python
+from raxe import Raxe
+from raxe.sdk.integrations import RaxePipeline
+
+pipe = RaxePipeline(
+    task="text-generation",
+    model="gpt2",
+
+    # RAXE options
+    raxe=Raxe(telemetry=False),           # Custom client
+    raxe_block_on_input_threats=False,    # Log-only (default)
+    raxe_block_on_output_threats=False,   # Log-only (default)
+
+    # Pipeline options
+    device="cuda",                         # GPU acceleration
+    max_length=100,                        # Generation params
+)
+```
+
+## Blocking Mode
+
+Enable blocking to prevent malicious inputs:
+
+```python
+from raxe.sdk.integrations import RaxePipeline
+from raxe.sdk.exceptions import SecurityException
+
+pipe = RaxePipeline(
+    task="text-generation",
+    model="gpt2",
+    raxe_block_on_input_threats=True,
+    raxe_block_on_output_threats=True,
+)
+
+try:
+    result = pipe(user_input)
+except SecurityException as e:
+    print(f"Blocked: {e.message}")
+```
+
+## Pipeline Examples
+
+### Text Generation
+
+```python
+pipe = RaxePipeline(task="text-generation", model="gpt2")
+
+result = pipe(
+    "Once upon a time",
+    max_length=50,
+    num_return_sequences=3,
+)
+```
+
+### Question Answering
+
+```python
+pipe = RaxePipeline(
+    task="question-answering",
+    model="distilbert-base-cased-distilled-squad"
+)
+
+result = pipe(
+    question="What is the capital of France?",
+    context="France is a country in Europe. Its capital is Paris."
+)
+
+print(result["answer"])  # "Paris"
+```
+
+### Summarization
+
+```python
+pipe = RaxePipeline(
+    task="summarization",
+    model="facebook/bart-large-cnn"
+)
+
+result = pipe(long_article, max_length=100, min_length=30)
+print(result[0]["summary_text"])
+```
+
+## Factory Function
+
+```python
+from raxe.sdk.integrations import create_huggingface_pipeline
+
+# Quick setup with blocking
+pipe = create_huggingface_pipeline(
+    task="text-generation",
+    model="gpt2",
+    block_on_threats=True,
+)
+```
+
+## Performance Tips
+
+### GPU Acceleration
+
+```python
+pipe = RaxePipeline(
+    task="text-generation",
+    model="gpt2",
+    device="cuda:0",  # Use first GPU
+)
+```
+
+### Large Models
+
+```python
+pipe = RaxePipeline(
+    task="text-generation",
+    model="meta-llama/Llama-2-7b-hf",
+    pipeline_kwargs={
+        "torch_dtype": "float16",
+        "device_map": "auto",
+    },
+)
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="LiteLLM" icon="cloud" href="/integrations/litellm">
+    200+ cloud providers through LiteLLM
+  </Card>
+  <Card title="OpenAI" icon="robot" href="/wrappers/openai">
+    Drop-in OpenAI wrapper
+  </Card>
+</CardGroup>

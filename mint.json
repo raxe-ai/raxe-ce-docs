@@ -67,6 +67,7 @@
         "integrations/llamaindex",
         "integrations/litellm",
         "integrations/dspy",
+        "integrations/huggingface",
         "integrations/portkey",
         "integrations/openclaw"
       ]
