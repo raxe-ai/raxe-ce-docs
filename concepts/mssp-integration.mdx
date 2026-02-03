@@ -1,0 +1,528 @@
+---
+title: "MSSP Integration"
+description: "Deploy and manage RAXE across multiple customers with centralized monitoring"
+---
+
+## Who Is This For?
+
+<CardGroup cols={2}>
+
+<Card title="MSSPs & Security Partners" icon="building-shield">
+  You manage security for **multiple customers** and need:
+  - Centralized SOC alerting
+  - Per-customer privacy controls
+  - Agent health monitoring
+  - SIEM integration
+
+  **This guide is for you.**
+</Card>
+
+<Card title="Single Application Developer" icon="code">
+  You're building **one application** and just want threat alerts?
+
+  You don't need full MSSP setup. Use the SDK callbacks:
+
+  ```python
+  result = raxe.scan(prompt)
+  if result.has_threats:
+      send_alert(result)  # Your alerting logic
+  ```
+
+  See [Agentic Scanning](/sdk/agentic-scanning) for simpler integration.
+</Card>
+
+</CardGroup>
+
+---
+
+## Overview
+
+RAXE's MSSP/Partner ecosystem enables Managed Security Service Providers to:
+
+- **Multi-tenant management**: Manage multiple customers under one MSSP account
+- **Centralized alerting**: Receive scan alerts via webhook to your SOC
+- **Privacy controls**: Per-customer data mode (full vs privacy_safe)
+- **Agent monitoring**: Track agent health with heartbeats and status
+- **SIEM integration**: Forward to Splunk, CrowdStrike, Sentinel, CEF, or ArcSight
+
+## Key Concepts
+
+Before diving in, here's what the terms mean:
+
+| Term | What It Is | Example |
+|------|------------|---------|
+| **MSSP** | Your security company | "Acme Security Services" |
+| **Customer** | A client you protect | "BigCorp Inc" (one of your clients) |
+| **Agent** | A RAXE deployment at a customer site | The RAXE instance running in BigCorp's infrastructure |
+| **Webhook** | Your SOC endpoint that receives alerts | `https://soc.acme.com/raxe/alerts` |
+
+## Architecture
+
+```
+RAXE Platform
+    └── MSSP/Partner (mssp_id)
+            ├── Webhook URL (your SOC endpoint)
+            ├── Webhook Secret (HMAC signing)
+            │
+            └── Customer (customer_id)
+                    ├── data_mode (full | privacy_safe)
+                    ├── retention_days (0-90)
+                    │
+                    └── Agent (agent_id)
+                            └── Scans → MSSP webhook
+```
+
+## Setup Journey
+
+<Steps>
+
+<Step title="Create Your MSSP Account">
+Register your security practice with a webhook endpoint to receive alerts:
+
+```bash
+raxe mssp create --id mssp_yourcompany \
+    --name "Your Security Services" \
+    --webhook-url https://soc.company.com/raxe/alerts \
+    --webhook-secret your_secret_here
+```
+
+Your webhook will receive JSON payloads for every threat detected across all customers.
+</Step>
+
+<Step title="Add Your Customers">
+Create a customer record for each client you protect:
+
+```bash
+raxe customer create --mssp mssp_yourcompany --id cust_acme \
+    --name "Acme Corporation" \
+    --data-mode full
+```
+
+Each customer can have different privacy settings (full data vs metadata only).
+</Step>
+
+<Step title="Deploy Agents at Customer Sites">
+When you deploy RAXE at a customer's infrastructure, register the agent:
+
+```bash
+raxe agent register --mssp mssp_yourcompany --customer cust_acme \
+    --version 0.10.0 agent_prod_001
+```
+
+Agents send heartbeats so you can monitor their health from your SOC.
+</Step>
+
+<Step title="Test Your Webhook">
+Verify everything is connected:
+
+```bash
+raxe mssp test-webhook mssp_yourcompany
+```
+
+You should see a test event arrive at your webhook endpoint.
+</Step>
+
+</Steps>
+
+### SDK Alternative
+
+```python
+from raxe.sdk.partner import create_partner_client
+
+# Initialize client
+client = create_partner_client("mssp_yourcompany")
+
+# Create customer
+customer = client.create_customer(
+    customer_id="cust_new",
+    name="New Customer",
+    data_mode="full",
+)
+
+# Get statistics
+stats = client.get_mssp_stats()
+print(f"Customers: {stats['total_customers']}")
+print(f"Agents: {stats['total_agents']}")
+```
+
+## Data Privacy Modes
+
+<CardGroup cols={2}>
+
+<Card title="Full Mode" icon="database">
+  **Complete data access**
+
+  Webhook receives:
+  - Raw prompt text
+  - Matched text snippets
+  - All detection metadata
+
+  Use when customer consents to full data sharing.
+</Card>
+
+<Card title="Privacy Safe Mode" icon="shield-halved">
+  **Metadata only**
+
+  Webhook receives:
+  - Prompt hash (SHA-256)
+  - Prompt length
+  - Detection metadata
+
+  **No raw text transmitted.** For privacy-sensitive customers.
+</Card>
+
+</CardGroup>
+
+## CLI Commands
+
+### MSSP Management
+
+```bash
+raxe mssp create --id <id> --name <name> --webhook-url <url> --webhook-secret <secret>
+raxe mssp list
+raxe mssp show <mssp_id>
+raxe mssp test-webhook <mssp_id>
+raxe mssp delete <mssp_id> [--force]
+```
+
+### Customer Management
+
+```bash
+raxe customer create --mssp <mssp_id> --id <id> --name <name> [--data-mode full|privacy_safe]
+raxe customer list --mssp <mssp_id>
+raxe customer show --mssp <mssp_id> <customer_id>
+raxe customer configure <customer_id> --mssp <mssp_id> [options]
+raxe customer delete --mssp <mssp_id> <customer_id> [--force]
+```
+
+### Agent Management
+
+```bash
+raxe agent register --mssp <mssp_id> --customer <customer_id> [--version <ver>] <agent_id>
+raxe agent list --mssp <mssp_id>
+raxe agent status --mssp <mssp_id> --customer <customer_id> <agent_id>
+raxe agent heartbeat <agent_id>
+raxe agent unregister <agent_id> [--force]
+```
+
+## Webhook Payload
+
+### Threat Detection Event
+
+```json
+{
+  "event_type": "scan",
+  "timestamp": "2026-01-30T10:30:00Z",
+  "payload": {
+    "prompt_hash": "sha256:abc123...",
+    "prompt_length": 156,
+    "threat_detected": true,
+
+    "_mssp_context": {
+      "mssp_id": "mssp_yourcompany",
+      "customer_id": "cust_acme",
+      "customer_name": "Acme Corporation",
+      "data_mode": "full"
+    },
+
+    "_mssp_data": {
+      "prompt_text": "Ignore all previous instructions...",
+      "matched_text": ["Ignore all previous instructions"]
+    },
+
+    "l1": {
+      "hit": true,
+      "detection_count": 3,
+      "highest_severity": "critical"
+    }
+  }
+}
+```
+
+<Note>
+  `_mssp_data` block only appears in `full` mode. In `privacy_safe` mode, only `_mssp_context` is included.
+</Note>
+
+## Webhook Signature Verification
+
+All webhooks are signed with HMAC-SHA256:
+
+```python
+import hmac
+import hashlib
+
+def verify_webhook(payload: bytes, signature: str, secret: str) -> bool:
+    """Verify X-Raxe-Signature header."""
+    timestamp = request.headers.get('X-Raxe-Timestamp')
+    expected = "sha256=" + hmac.new(
+        secret.encode(),
+        f"{timestamp}.".encode() + payload,
+        hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(expected, signature)
+```
+
+**Headers:**
+- `X-Raxe-Signature`: HMAC-SHA256 signature
+- `X-Raxe-Timestamp`: Unix timestamp
+- `Content-Type`: application/json
+
+## SIEM Integration
+
+Forward events to enterprise SIEMs in native formats:
+
+<Tabs>
+  <Tab title="Splunk">
+```python
+from raxe.domain.siem.config import SIEMConfig, SIEMType
+from raxe.infrastructure.siem import create_siem_adapter
+
+splunk = create_siem_adapter(SIEMConfig(
+    siem_type=SIEMType.SPLUNK,
+    endpoint_url="https://splunk.company.com:8088/services/collector",
+    auth_token="your-hec-token",
+    extra={"index": "raxe_security"},
+))
+
+result = splunk.send_event(splunk.transform_event(event))
+```
+  </Tab>
+  <Tab title="CrowdStrike">
+```python
+crowdstrike = create_siem_adapter(SIEMConfig(
+    siem_type=SIEMType.CROWDSTRIKE,
+    endpoint_url="https://cloud.community.humio.com/api/v1/ingest/json",
+    auth_token="your-ingest-token",
+))
+
+result = crowdstrike.send_event(crowdstrike.transform_event(event))
+```
+  </Tab>
+  <Tab title="Sentinel">
+```python
+sentinel = create_siem_adapter(SIEMConfig(
+    siem_type=SIEMType.SENTINEL,
+    endpoint_url="https://your-workspace.ods.opinsights.azure.com",
+    auth_token="base64-encoded-shared-key",
+    extra={"workspace_id": "your-workspace-id"},
+))
+
+result = sentinel.send_event(sentinel.transform_event(event))
+```
+  </Tab>
+  <Tab title="CEF (HTTP)">
+```python
+cef_http = create_siem_adapter(SIEMConfig(
+    siem_type=SIEMType.CEF,
+    endpoint_url="https://collector.company.com/cef",
+    auth_token="your-bearer-token",
+))
+
+result = cef_http.send_event(cef_http.transform_event(event))
+```
+  </Tab>
+  <Tab title="CEF (Syslog)">
+```python
+# UDP Syslog
+cef_udp = create_siem_adapter(SIEMConfig(
+    siem_type=SIEMType.CEF,
+    endpoint_url="syslog://siem.company.com",
+    auth_token="not-used",
+    extra={"transport": "udp", "port": 514},
+))
+
+# TCP with TLS
+cef_tls = create_siem_adapter(SIEMConfig(
+    siem_type=SIEMType.CEF,
+    endpoint_url="syslog://siem.company.com",
+    auth_token="not-used",
+    extra={"transport": "tcp", "port": 6514, "use_tls": True},
+))
+
+result = cef_udp.send_event(cef_udp.transform_event(event))
+```
+  </Tab>
+  <Tab title="ArcSight">
+```python
+arcsight = create_siem_adapter(SIEMConfig(
+    siem_type=SIEMType.ARCSIGHT,
+    endpoint_url="https://arcsight.company.com/receiver/v1/events",
+    auth_token="your-connector-token",
+    extra={
+        "smart_connector_id": "sc-001",
+        "device_vendor": "RAXE",
+        "device_product": "ThreatDetection",
+    },
+))
+
+result = arcsight.send_event(arcsight.transform_event(event))
+```
+  </Tab>
+</Tabs>
+
+## Agent Monitoring
+
+### What Are Agents?
+
+An **agent** is a RAXE deployment running at a customer's site. When you deploy RAXE into a customer's infrastructure (their LangChain app, their API gateway, etc.), that deployment becomes an agent.
+
+```
+Your SOC Dashboard
+    │
+    └── Customer: Acme Corp
+            ├── agent_prod_001 (Production API)     ● Online
+            ├── agent_prod_002 (Chatbot)            ● Online
+            └── agent_staging  (Staging)            ○ Offline
+```
+
+Agents send **heartbeats** every 60 seconds. If heartbeats stop, you know something's wrong.
+
+### Agent Status
+
+```bash
+raxe agent status --mssp mssp_yourcompany --customer cust_acme agent_prod_001
+```
+
+```
+       Agent Status: agent_prod_001
+┌────────────────┬─────────────────────┐
+│ Agent ID       │ agent_prod_001      │
+│ Status         │ online              │
+│ Version        │ 0.10.0              │
+│ Last Heartbeat │ 2026-01-30T11:30:00 │
+│ Total Scans    │ 1250                │
+│ Total Threats  │ 23                  │
+└────────────────┴─────────────────────┘
+```
+
+### Heartbeat Configuration
+
+Agents send periodic heartbeats. Configure offline threshold per customer:
+
+```bash
+raxe customer configure cust_acme --mssp mssp_yourcompany \
+    --heartbeat-threshold 300  # 5 minutes
+```
+
+## Audit Logging
+
+Track all data transmissions for compliance:
+
+```python
+from raxe.infrastructure.audit.mssp_audit_logger import MSSPAuditLogger, MSSPAuditLoggerConfig
+
+logger = MSSPAuditLogger(MSSPAuditLoggerConfig(
+    log_directory="/var/log/raxe/audit"
+))
+
+# Get statistics
+stats = logger.get_stats()
+print(f"Total: {stats['total_deliveries']}")
+print(f"Success: {stats['successful']}")
+print(f"Failed: {stats['failed']}")
+```
+
+## Best Practices
+
+<AccordionGroup>
+
+<Accordion title="Start with Privacy Safe Mode">
+Deploy new customers in `privacy_safe` mode initially. Upgrade to `full` mode only after customer consent.
+</Accordion>
+
+<Accordion title="Verify Webhook Signatures">
+Always verify HMAC signatures to ensure webhook authenticity and prevent tampering.
+</Accordion>
+
+<Accordion title="Monitor Agent Health">
+Set appropriate heartbeat thresholds and monitor agent status to catch deployment issues early.
+</Accordion>
+
+<Accordion title="Configure Retention">
+Set appropriate `retention_days` per customer based on their compliance requirements.
+</Accordion>
+
+</AccordionGroup>
+
+## MSSP Tiers
+
+MSSPs have subscription tiers that determine customer limits:
+
+| Tier | Max Customers | Description |
+|------|---------------|-------------|
+| **Starter** | 10 | Default tier for new MSSPs |
+| **Professional** | 50 | Growing security practices |
+| **Enterprise** | Unlimited | Large-scale deployments |
+
+Set the tier when creating an MSSP:
+
+```bash
+raxe mssp create --id mssp_yourcompany \
+    --name "Your Security Services" \
+    --webhook-url https://soc.company.com/alerts \
+    --webhook-secret secret \
+    --tier professional \
+    --max-customers 50
+```
+
+## Testing with Self-Signed Certificates
+
+For local testing with self-signed HTTPS certificates:
+
+```bash
+# Set environment variable to skip SSL verification
+export RAXE_SKIP_SSL_VERIFY=true
+
+# Test webhook with self-signed cert
+raxe mssp test-webhook mssp_yourcompany
+```
+
+<Warning>
+Only use `RAXE_SKIP_SSL_VERIFY=true` in development/testing. Always use valid certificates in production.
+</Warning>
+
+### Webhook Test Server
+
+RAXE includes a test server script for local webhook development:
+
+```bash
+# Start the test server (auto-generates self-signed cert)
+python scripts/webhook_test_server.py --port 9001 --secret my_secret
+
+# In another terminal, configure and test
+raxe mssp create --id test_mssp --name "Test" \
+    --webhook-url https://127.0.0.1:9001/raxe/alerts \
+    --webhook-secret my_secret
+
+RAXE_SKIP_SSL_VERIFY=true raxe mssp test-webhook test_mssp
+```
+
+The test server displays:
+- Webhook payload with syntax highlighting
+- Signature verification status
+- Threat detection highlighting
+- Full JSON output with `--full-json` flag
+
+## Limits (Community Edition)
+
+| Resource | Community | Enterprise |
+|----------|-----------|------------|
+| MSSPs | 1 | Unlimited |
+| Customers per MSSP | 10 | Unlimited |
+| Agents per customer | 50 | Unlimited |
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+
+<Card title="SIEM Integration" icon="chart-mixed" href="/integrations/siem">
+  Forward events to Splunk, CrowdStrike, Sentinel, or any CEF-compatible SIEM.
+</Card>
+
+<Card title="CLI Reference" icon="terminal" href="/cli/commands">
+  Full reference for `raxe mssp`, `raxe customer`, and `raxe agent` commands.
+</Card>
+
+</CardGroup>

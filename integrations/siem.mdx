@@ -1,0 +1,568 @@
+---
+title: "SIEM Integration"
+description: "Forward RAXE threat detections to your Security Information and Event Management platform"
+---
+
+## Overview
+
+RAXE integrates with enterprise SIEMs to provide centralized threat visibility. Forward scan events in native formats to:
+
+<CardGroup cols={3}>
+
+<Card title="Splunk" icon="chart-mixed">
+  HTTP Event Collector (HEC) format
+</Card>
+
+<Card title="CrowdStrike" icon="crow">
+  Falcon LogScale (Humio) ingest
+</Card>
+
+<Card title="Microsoft Sentinel" icon="microsoft">
+  Data Collector API with HMAC auth
+</Card>
+
+<Card title="ArcSight" icon="shield-halved">
+  SmartConnector CEF format
+</Card>
+
+<Card title="CEF (Generic)" icon="server">
+  Any CEF-compatible SIEM via HTTP or Syslog
+</Card>
+
+<Card title="Syslog" icon="network-wired">
+  UDP, TCP, or TLS transport
+</Card>
+
+</CardGroup>
+
+<Note>
+CEF (Common Event Format) support means RAXE works with **any SIEM** that accepts CEF, including QRadar, LogRhythm, Elastic SIEM, Sumo Logic, and more.
+</Note>
+
+---
+
+## Quick Start (CLI)
+
+Configure SIEM integration per customer:
+
+```bash
+# Splunk HEC
+raxe customer siem configure cust_acme --mssp mssp_partner \
+    --type splunk \
+    --url https://splunk.company.com:8088/services/collector/event \
+    --token "hec-token-here" \
+    --index security \
+    --source raxe
+
+# Test the connection
+raxe customer siem test cust_acme --mssp mssp_partner
+
+# View configuration
+raxe customer siem show cust_acme --mssp mssp_partner
+```
+
+---
+
+## Splunk
+
+### Configuration
+
+<Tabs>
+  <Tab title="CLI">
+```bash
+raxe customer siem configure cust_acme --mssp mssp_partner \
+    --type splunk \
+    --url https://splunk.company.com:8088/services/collector/event \
+    --token "your-hec-token" \
+    --index security \
+    --source raxe \
+    --sourcetype _json
+```
+  </Tab>
+  <Tab title="Python SDK">
+```python
+from raxe.domain.siem.config import SIEMConfig, SIEMType
+from raxe.infrastructure.siem import create_siem_adapter
+
+adapter = create_siem_adapter(SIEMConfig(
+    siem_type=SIEMType.SPLUNK,
+    endpoint_url="https://splunk.company.com:8088/services/collector/event",
+    auth_token="your-hec-token",
+    extra={
+        "index": "security",
+        "source": "raxe",
+        "sourcetype": "_json",
+        "host": "raxe-agent-01",
+    },
+))
+
+# Send event
+result = adapter.send_event(adapter.transform_event(scan_event))
+```
+  </Tab>
+</Tabs>
+
+### Splunk Event Format
+
+```json
+{
+  "time": 1706619000,
+  "host": "raxe-agent-01",
+  "source": "raxe",
+  "sourcetype": "_json",
+  "index": "security",
+  "event": {
+    "event_type": "scan",
+    "threat_detected": true,
+    "severity": "critical",
+    "rule_ids": ["pi-001", "pi-003"],
+    "prompt_hash": "sha256:abc123...",
+    "customer_id": "cust_acme",
+    "agent_id": "agent_prod_001"
+  }
+}
+```
+
+### Splunk Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--index` | Splunk index name | `main` |
+| `--source` | Event source identifier | `raxe` |
+| `--sourcetype` | Splunk sourcetype | `_json` |
+| `--host` | Host identifier | Agent hostname |
+
+---
+
+## CrowdStrike Falcon LogScale
+
+### Configuration
+
+<Tabs>
+  <Tab title="CLI">
+```bash
+raxe customer siem configure cust_acme --mssp mssp_partner \
+    --type crowdstrike \
+    --url https://cloud.community.humio.com/api/v1/ingest/hec \
+    --token "your-ingest-token" \
+    --repository security
+```
+  </Tab>
+  <Tab title="Python SDK">
+```python
+adapter = create_siem_adapter(SIEMConfig(
+    siem_type=SIEMType.CROWDSTRIKE,
+    endpoint_url="https://cloud.community.humio.com/api/v1/ingest/hec",
+    auth_token="your-ingest-token",
+    extra={
+        "repository": "security",
+        "parser": "raxe",
+    },
+))
+```
+  </Tab>
+</Tabs>
+
+### CrowdStrike Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--repository` | LogScale repository | - |
+| `--parser` | Custom parser name | - |
+
+---
+
+## Microsoft Sentinel
+
+### Configuration
+
+<Tabs>
+  <Tab title="CLI">
+```bash
+raxe customer siem configure cust_acme --mssp mssp_partner \
+    --type sentinel \
+    --url https://YOUR-WORKSPACE.ods.opinsights.azure.com/api/logs \
+    --token "base64-encoded-shared-key" \
+    --workspace-id "your-workspace-id" \
+    --log-type RaxeEvents
+```
+  </Tab>
+  <Tab title="Python SDK">
+```python
+adapter = create_siem_adapter(SIEMConfig(
+    siem_type=SIEMType.SENTINEL,
+    endpoint_url="https://YOUR-WORKSPACE.ods.opinsights.azure.com/api/logs",
+    auth_token="base64-encoded-shared-key",
+    extra={
+        "workspace_id": "your-workspace-id",
+        "log_type": "RaxeEvents",
+    },
+))
+```
+  </Tab>
+</Tabs>
+
+### Sentinel Event Format
+
+Events are transformed to PascalCase for Azure conventions:
+
+```json
+{
+  "TimeGenerated": "2026-01-30T10:30:00Z",
+  "EventType": "scan",
+  "ThreatDetected": true,
+  "Severity": "Critical",
+  "RuleIds": ["pi-001"],
+  "PromptHash": "sha256:abc123...",
+  "CustomerId": "cust_acme"
+}
+```
+
+### Sentinel Options
+
+| Option | Description | Required |
+|--------|-------------|----------|
+| `--workspace-id` | Azure Log Analytics workspace ID | Yes |
+| `--log-type` | Custom log type name | Yes |
+
+<Note>
+Sentinel uses HMAC-SHA256 authentication. The token should be your Log Analytics workspace shared key, base64-encoded.
+</Note>
+
+---
+
+## ArcSight
+
+### Configuration
+
+<Tabs>
+  <Tab title="CLI">
+```bash
+raxe customer siem configure cust_acme --mssp mssp_partner \
+    --type arcsight \
+    --url https://arcsight.company.com/receiver/v1/events \
+    --token "connector-token" \
+    --smart-connector-id sc-001 \
+    --device-vendor RAXE \
+    --device-product ThreatDetection
+```
+  </Tab>
+  <Tab title="Python SDK">
+```python
+adapter = create_siem_adapter(SIEMConfig(
+    siem_type=SIEMType.ARCSIGHT,
+    endpoint_url="https://arcsight.company.com/receiver/v1/events",
+    auth_token="connector-token",
+    extra={
+        "smart_connector_id": "sc-001",
+        "device_vendor": "RAXE",
+        "device_product": "ThreatDetection",
+    },
+))
+```
+  </Tab>
+</Tabs>
+
+### ArcSight Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--smart-connector-id` | SmartConnector ID | - |
+| `--device-vendor` | CEF device vendor | `RAXE` |
+| `--device-product` | CEF device product | `ThreatDetection` |
+
+---
+
+## CEF (Common Event Format)
+
+CEF support enables integration with **any SIEM** that accepts CEF, including:
+- IBM QRadar
+- LogRhythm
+- Elastic SIEM
+- Sumo Logic
+- Exabeam
+- And many more
+
+### CEF over HTTP
+
+<Tabs>
+  <Tab title="CLI">
+```bash
+raxe customer siem configure cust_acme --mssp mssp_partner \
+    --type cef \
+    --url https://collector.company.com/cef \
+    --token "bearer-token"
+```
+  </Tab>
+  <Tab title="Python SDK">
+```python
+adapter = create_siem_adapter(SIEMConfig(
+    siem_type=SIEMType.CEF,
+    endpoint_url="https://collector.company.com/cef",
+    auth_token="bearer-token",
+))
+```
+  </Tab>
+</Tabs>
+
+### CEF over Syslog (UDP)
+
+<Tabs>
+  <Tab title="CLI">
+```bash
+raxe customer siem configure cust_acme --mssp mssp_partner \
+    --type cef \
+    --url syslog://siem.company.com \
+    --transport udp \
+    --port 514
+```
+  </Tab>
+  <Tab title="Python SDK">
+```python
+adapter = create_siem_adapter(SIEMConfig(
+    siem_type=SIEMType.CEF,
+    endpoint_url="syslog://siem.company.com",
+    auth_token="not-used",
+    extra={"transport": "udp", "port": 514},
+))
+```
+  </Tab>
+</Tabs>
+
+### CEF over Syslog (TCP with TLS)
+
+<Tabs>
+  <Tab title="CLI">
+```bash
+raxe customer siem configure cust_acme --mssp mssp_partner \
+    --type cef \
+    --url syslog://siem.company.com \
+    --transport tcp \
+    --port 6514 \
+    --tls
+```
+  </Tab>
+  <Tab title="Python SDK">
+```python
+adapter = create_siem_adapter(SIEMConfig(
+    siem_type=SIEMType.CEF,
+    endpoint_url="syslog://siem.company.com",
+    auth_token="not-used",
+    extra={"transport": "tcp", "port": 6514, "use_tls": True},
+))
+```
+  </Tab>
+</Tabs>
+
+### CEF Message Format
+
+RAXE generates standard CEF messages:
+
+```
+CEF:0|RAXE|ThreatDetection|0.10.0|pi-001|Prompt Injection Detected|10|rt=1706619000000 src=inst_abc123 suser=agent_prod_001 cs1=sha256:abc123 cs1Label=PromptHash cs2=pi-001,pi-003 cs2Label=RuleIDs cs3=PI cs3Label=ThreatFamilies
+```
+
+### CEF Field Mapping
+
+| CEF Field | RAXE Field | Description |
+|-----------|------------|-------------|
+| `rt` | timestamp | Receipt time (ms epoch) |
+| `src` | installation_id | Source identifier |
+| `suser` | agent_id | Agent identifier |
+| `cs1` | prompt_hash | SHA-256 prompt hash |
+| `cs2` | rule_ids | Comma-separated rule IDs |
+| `cs3` | families | Threat families detected |
+| `cs5` | mssp_id | MSSP identifier |
+| `cs6` | customer_id | Customer identifier |
+| `cn1` | prompt_length | Prompt character count |
+| `cn2` | detection_count | Number of detections |
+| `cn3` | scan_duration_ms | Scan latency |
+
+### CEF Severity Mapping
+
+| RAXE Severity | CEF Severity | Syslog Priority |
+|---------------|--------------|-----------------|
+| `none` | 0 | 6 (informational) |
+| `LOW` | 3 | 5 (notice) |
+| `MEDIUM` | 5 | 4 (warning) |
+| `HIGH` | 7 | 3 (error) |
+| `CRITICAL` | 10 | 2 (critical) |
+
+### CEF Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--transport` | `http`, `udp`, or `tcp` | `http` |
+| `--port` | Syslog port | 514 (UDP), 6514 (TCP) |
+| `--tls` | Enable TLS (TCP only) | false |
+| `--facility` | Syslog facility | 16 (local0) |
+
+---
+
+## Multi-Customer Routing
+
+The SIEM dispatcher routes events to the correct SIEM based on customer:
+
+```python
+from raxe.infrastructure.siem import SIEMDispatcher, create_siem_adapter
+
+dispatcher = SIEMDispatcher()
+
+# Customer A → Splunk
+dispatcher.register_adapter(
+    create_siem_adapter(splunk_config),
+    customer_id="cust_acme"
+)
+
+# Customer B → CrowdStrike
+dispatcher.register_adapter(
+    create_siem_adapter(crowdstrike_config),
+    customer_id="cust_beta"
+)
+
+# Global adapter (receives ALL events)
+dispatcher.register_adapter(create_siem_adapter(global_config))
+
+# Start background delivery
+dispatcher.start()
+
+# Events auto-route based on customer_id
+dispatcher.dispatch(event)
+```
+
+---
+
+## Testing
+
+### Test Connection
+
+```bash
+# Test SIEM connectivity
+raxe customer siem test cust_acme --mssp mssp_partner
+```
+
+Output:
+```
+Testing SIEM connection for cust_acme...
+✓ Connection successful (HTTP 200)
+✓ Authentication valid
+✓ Test event delivered
+```
+
+### View Configuration
+
+```bash
+raxe customer siem show cust_acme --mssp mssp_partner
+```
+
+Output:
+```
+SIEM Configuration: cust_acme
+
+  Type:     splunk
+  URL:      https://splunk.company.com:8088/services/collector/event
+  Index:    security
+  Source:   raxe
+  Enabled:  true
+```
+
+### Disable SIEM
+
+```bash
+raxe customer siem disable cust_acme --mssp mssp_partner
+```
+
+---
+
+## Event Batching
+
+SIEM adapters batch events for efficiency:
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `batch_size` | 100 | Events per batch |
+| `flush_interval_seconds` | 10 | Max wait before flush |
+| `retry_count` | 3 | Retries on failure |
+| `timeout_seconds` | 30 | Request timeout |
+
+Configure via SDK:
+
+```python
+config = SIEMConfig(
+    siem_type=SIEMType.SPLUNK,
+    endpoint_url="...",
+    auth_token="...",
+    batch_size=50,
+    flush_interval_seconds=5,
+    retry_count=5,
+    timeout_seconds=60,
+)
+```
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+
+<Accordion title="Connection Failed">
+1. Verify URL is correct (include full path for HEC endpoints)
+2. Check firewall allows outbound to SIEM
+3. Verify token/credentials are valid
+4. Test with curl: `curl -X POST <url> -H "Authorization: Bearer <token>"`
+</Accordion>
+
+<Accordion title="Events Not Appearing">
+1. Check SIEM index/repository permissions
+2. Verify event format matches SIEM expectations
+3. Check SIEM ingestion logs for parsing errors
+4. Ensure batch has been flushed (default: 10 seconds)
+</Accordion>
+
+<Accordion title="Syslog Not Receiving">
+1. Verify syslog daemon is running
+2. Check port is correct (514 UDP, 6514 TLS)
+3. For TLS, ensure certificate is valid
+4. Check firewall allows UDP/TCP on syslog port
+</Accordion>
+
+<Accordion title="Authentication Errors">
+- **Splunk**: Token must have HEC permissions
+- **Sentinel**: Use base64-encoded shared key
+- **CrowdStrike**: Use ingest API token
+- **CEF HTTP**: Bearer token format required
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+
+<Accordion title="Use Dedicated Index/Repository">
+Create a dedicated index (Splunk) or repository (LogScale) for RAXE events. This enables:
+- Easier searching and dashboards
+- Separate retention policies
+- Access control isolation
+</Accordion>
+
+<Accordion title="Enable TLS for Syslog">
+Always use TLS (port 6514) for syslog in production. UDP syslog is unencrypted and can be spoofed.
+</Accordion>
+
+<Accordion title="Monitor Delivery">
+Use audit logging to track SIEM delivery success rates:
+```python
+from raxe.infrastructure.audit.mssp_audit_logger import get_mssp_audit_logger
+stats = get_mssp_audit_logger().get_stats()
+print(f"Success rate: {stats['successful'] / stats['total_deliveries']:.1%}")
+```
+</Accordion>
+
+<Accordion title="Per-Customer Configuration">
+Different customers may use different SIEMs. Configure each customer individually to route events correctly.
+</Accordion>
+
+</AccordionGroup>

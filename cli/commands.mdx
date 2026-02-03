@@ -438,3 +438,228 @@ Validating rule.yaml...
 
 Rule is valid!
 ```
+
+---
+
+## raxe mssp
+
+Manage MSSPs for partner deployments.
+
+```bash
+raxe mssp <subcommand>
+```
+
+### Subcommands
+
+| Command | Description |
+|---------|-------------|
+| `create` | Create a new MSSP |
+| `list` | List all MSSPs |
+| `show <id>` | Show MSSP details |
+| `test-webhook <id>` | Test webhook connectivity |
+| `delete <id>` | Delete an MSSP |
+| `cleanup` | Clean up old audit logs |
+
+### Create Options
+
+| Option | Description |
+|--------|-------------|
+| `--id` | MSSP identifier (must start with `mssp_`) |
+| `--name` | Human-readable MSSP name |
+| `--webhook-url` | Webhook endpoint URL (HTTPS required) |
+| `--webhook-secret` | Shared secret for HMAC signing |
+| `--tier` | Subscription tier: `starter`, `professional`, `enterprise` (default: starter) |
+| `--max-customers` | Maximum customers allowed (default: 10) |
+
+### Examples
+
+```bash
+# Create MSSP with webhook
+raxe mssp create --id mssp_yourcompany \
+    --name "Your Security Services" \
+    --webhook-url https://soc.company.com/raxe/alerts \
+    --webhook-secret your_secret_here \
+    --tier starter \
+    --max-customers 10
+
+# List MSSPs
+raxe mssp list
+
+# Show details
+raxe mssp show mssp_yourcompany
+
+# Test webhook
+raxe mssp test-webhook mssp_yourcompany
+
+# Delete MSSP
+raxe mssp delete mssp_yourcompany --force
+```
+
+---
+
+## raxe customer
+
+Manage customers within an MSSP.
+
+```bash
+raxe customer <subcommand>
+```
+
+### Subcommands
+
+| Command | Description |
+|---------|-------------|
+| `create` | Create a new customer |
+| `list` | List customers for an MSSP |
+| `show <id>` | Show customer details |
+| `configure <id>` | Update customer settings |
+| `delete <id>` | Delete a customer |
+
+### Examples
+
+```bash
+# Create customer with full data mode
+raxe customer create --mssp mssp_yourcompany --id cust_acme \
+    --name "Acme Corporation" \
+    --data-mode full \
+    --retention-days 60
+
+# Create privacy-safe customer
+raxe customer create --mssp mssp_yourcompany --id cust_privacy \
+    --name "Privacy Corp" \
+    --data-mode privacy_safe
+
+# List customers
+raxe customer list --mssp mssp_yourcompany
+
+# Show details
+raxe customer show --mssp mssp_yourcompany cust_acme
+
+# Update configuration
+raxe customer configure cust_acme --mssp mssp_yourcompany \
+    --data-mode privacy_safe \
+    --retention-days 90
+
+# Delete customer
+raxe customer delete --mssp mssp_yourcompany cust_acme --force
+```
+
+### Configuration Options
+
+| Option | Description |
+|--------|-------------|
+| `--data-mode` | `full` or `privacy_safe` |
+| `--retention-days` | Data retention (0-90 days) |
+| `--heartbeat-threshold` | Seconds before agent marked offline |
+
+### SIEM Subcommands
+
+```bash
+raxe customer siem configure <id> --mssp <mssp_id> --type <type> --url <url> --token <token>
+raxe customer siem show <id> --mssp <mssp_id>
+raxe customer siem test <id> --mssp <mssp_id>
+raxe customer siem disable <id> --mssp <mssp_id>
+```
+
+### SIEM Configuration Examples
+
+```bash
+# Splunk HEC
+raxe customer siem configure cust_acme --mssp mssp_yourcompany \
+    --type splunk \
+    --url https://splunk.company.com:8088/services/collector/event \
+    --token "hec-token"
+
+# CEF over HTTP
+raxe customer siem configure cust_acme --mssp mssp_yourcompany \
+    --type cef \
+    --url https://collector.company.com/cef \
+    --token "bearer-token"
+
+# CEF over Syslog UDP
+raxe customer siem configure cust_acme --mssp mssp_yourcompany \
+    --type cef \
+    --url syslog://siem.company.com \
+    --transport udp --port 514
+
+# CEF over Syslog TCP with TLS
+raxe customer siem configure cust_acme --mssp mssp_yourcompany \
+    --type cef \
+    --url syslog://siem.company.com \
+    --transport tcp --port 6514 --tls
+
+# ArcSight SmartConnector
+raxe customer siem configure cust_acme --mssp mssp_yourcompany \
+    --type arcsight \
+    --url https://arcsight.company.com/receiver/v1/events \
+    --token "connector-token" \
+    --smart-connector-id sc-001
+```
+
+### SIEM Types
+
+| Type | Description |
+|------|-------------|
+| `splunk` | Splunk HTTP Event Collector |
+| `crowdstrike` | CrowdStrike Falcon LogScale |
+| `sentinel` | Microsoft Sentinel |
+| `cef` | Generic CEF (HTTP or Syslog) |
+| `arcsight` | ArcSight SmartConnector |
+
+---
+
+## raxe agent
+
+Manage agents deployed at customer sites.
+
+```bash
+raxe agent <subcommand>
+```
+
+### Subcommands
+
+| Command | Description |
+|---------|-------------|
+| `register` | Register a new agent |
+| `list` | List agents for an MSSP |
+| `status <id>` | Show agent status |
+| `heartbeat <id>` | Send agent heartbeat |
+| `unregister <id>` | Unregister an agent |
+
+### Examples
+
+```bash
+# Register agent
+raxe agent register --mssp mssp_yourcompany --customer cust_acme \
+    --version 0.10.0 agent_prod_001
+
+# List agents
+raxe agent list --mssp mssp_yourcompany
+raxe agent list --mssp mssp_yourcompany --customer cust_acme
+
+# Show agent status
+raxe agent status --mssp mssp_yourcompany --customer cust_acme agent_prod_001
+
+# Send heartbeat
+raxe agent heartbeat agent_prod_001
+
+# Unregister agent
+raxe agent unregister agent_prod_001 --force
+```
+
+### Status Output
+
+```
+       Agent Status: agent_prod_001
+┌────────────────┬─────────────────────┐
+│ Agent ID       │ agent_prod_001      │
+│ Status         │ online              │
+│ MSSP           │ mssp_yourcompany    │
+│ Customer       │ cust_acme           │
+│ Version        │ 0.10.0              │
+│ Platform       │ darwin              │
+│ Last Heartbeat │ 2026-01-30T11:30:00 │
+│ Total Scans    │ 1250                │
+│ Total Threats  │ 23                  │
+└────────────────┴─────────────────────┘
+```
