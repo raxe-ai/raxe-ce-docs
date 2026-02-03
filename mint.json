@@ -58,15 +58,17 @@
       ]
     },
     {
-      "group": "Agent Frameworks",
+      "group": "Integrations",
       "pages": [
+        "integrations/index",
         "integrations/langchain",
         "integrations/crewai",
         "integrations/autogen",
         "integrations/llamaindex",
         "integrations/litellm",
         "integrations/dspy",
-        "integrations/portkey"
+        "integrations/portkey",
+        "integrations/openclaw"
       ]
     },
     {
@@ -96,6 +98,13 @@
       "pages": [
         "rules/overview",
         "rules/custom-rules"
+      ]
+    },
+    {
+      "group": "Enterprise",
+      "pages": [
+        "concepts/mssp-integration",
+        "integrations/siem"
       ]
     },
     {

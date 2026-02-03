@@ -24,8 +24,8 @@ RAXE is an **on-device ML security engine** for AI agents. It provides **think-t
   <Card title="Quick Start" icon="rocket" href="/quickstart">
     Protect your first agent in 60 seconds
   </Card>
-  <Card title="Agent Frameworks" icon="robot" href="/integrations/langchain">
-    LangChain, CrewAI, AutoGen, LlamaIndex + more
+  <Card title="Integrations" icon="puzzle-piece" href="/integrations/index">
+    LangChain, CrewAI, LiteLLM, SIEM + more
   </Card>
   <Card title="Detection Engine" icon="shield-halved" href="/concepts/detection-engine">
     5-head ML ensemble + 514 rules
@@ -56,19 +56,94 @@ AI agents aren't just LLMs — they're **autonomous systems** that:
 
 **RAXE provides think-time security** — real-time threat detection during agent inference, before action execution.
 
-## Agent Framework Support
+## Works With Your AI Stack
 
-RAXE integrates natively with leading agent frameworks:
+RAXE integrates across the entire AI ecosystem — from agent frameworks to LLM providers to enterprise security platforms.
 
-| Framework | Handler | What RAXE Protects |
-|-----------|---------|-------------------|
-| [LangChain](/integrations/langchain) | `RaxeCallbackHandler` | Chains, agents, tools, memory |
-| [CrewAI](/integrations/crewai) | `RaxeCrewGuard` | Multi-agent crews, task handoffs |
-| [AutoGen](/integrations/autogen) | `RaxeConversationGuard` | Conversational agents, functions |
-| [LlamaIndex](/integrations/llamaindex) | `RaxeAgentCallback` | ReAct agents, RAG retrieval |
-| [LiteLLM](/integrations/litellm) | `RaxeLiteLLMCallback` | 100+ LLM providers |
-| [DSPy](/integrations/dspy) | `RaxeDSPyCallback` | Programmatic modules |
-| [Portkey](/integrations/portkey) | `RaxePortkeyGuard` | AI gateway traffic |
+<Tabs>
+  <Tab title="Agent Frameworks">
+    <CardGroup cols={4}>
+      <Card title="LangChain" icon="link" href="/integrations/langchain">
+        Chains, agents, RAG
+      </Card>
+      <Card title="CrewAI" icon="users" href="/integrations/crewai">
+        Multi-agent crews
+      </Card>
+      <Card title="AutoGen" icon="robot" href="/integrations/autogen">
+        Conversational agents
+      </Card>
+      <Card title="LlamaIndex" icon="database" href="/integrations/llamaindex">
+        RAG pipelines
+      </Card>
+      <Card title="LiteLLM" icon="bolt" href="/integrations/litellm">
+        100+ providers
+      </Card>
+      <Card title="DSPy" icon="brain" href="/integrations/dspy">
+        Programmatic LMs
+      </Card>
+      <Card title="Portkey" icon="server" href="/integrations/portkey">
+        AI gateway
+      </Card>
+      <Card title="OpenClaw" icon="message-bot" href="/integrations/openclaw">
+        Personal AI
+      </Card>
+    </CardGroup>
+  </Tab>
+  <Tab title="LLM Providers">
+    <CardGroup cols={4}>
+      <Card title="OpenAI" icon="sparkles" href="/sdk/openai-wrapper">
+        GPT-4o, GPT-4
+      </Card>
+      <Card title="Anthropic" icon="a" href="/sdk/anthropic-wrapper">
+        Claude 3.5, 3
+      </Card>
+      <Card title="Azure" icon="microsoft" href="/integrations/litellm">
+        Azure OpenAI
+      </Card>
+      <Card title="Google" icon="google" href="/integrations/litellm">
+        Vertex AI, Gemini
+      </Card>
+      <Card title="AWS" icon="aws" href="/integrations/litellm">
+        Bedrock
+      </Card>
+      <Card title="Mistral" icon="wind" href="/integrations/litellm">
+        Mistral AI
+      </Card>
+      <Card title="Cohere" icon="c" href="/integrations/litellm">
+        Command, Embed
+      </Card>
+      <Card title="100+ More" icon="ellipsis" href="/integrations/litellm">
+        Via LiteLLM
+      </Card>
+    </CardGroup>
+  </Tab>
+  <Tab title="Enterprise SIEM">
+    <CardGroup cols={3}>
+      <Card title="Splunk" icon="chart-mixed" href="/integrations/siem">
+        HEC integration
+      </Card>
+      <Card title="CrowdStrike" icon="shield-halved" href="/integrations/siem">
+        Falcon LogScale
+      </Card>
+      <Card title="Sentinel" icon="microsoft" href="/integrations/siem">
+        Azure SIEM
+      </Card>
+      <Card title="ArcSight" icon="radar" href="/integrations/siem">
+        SmartConnector
+      </Card>
+      <Card title="QRadar" icon="ibm" href="/integrations/siem">
+        Via CEF
+      </Card>
+      <Card title="CEF/Syslog" icon="file-code" href="/integrations/siem">
+        Any SIEM
+      </Card>
+    </CardGroup>
+  </Tab>
+</Tabs>
+
+<div style={{ textAlign: 'center', marginTop: '1rem' }}>
+  <a href="/integrations/index">View all integrations →</a>
+</div>
 
 ## On-Device ML Detection
 
@@ -161,8 +236,8 @@ if result.has_threats:
   <Card title="Agentic Scanning" icon="shield-check" href="/sdk/agentic-scanning">
     Goal hijack, memory poisoning, tool chains
   </Card>
-  <Card title="Agent Frameworks" icon="robot" href="/integrations/langchain">
-    LangChain, CrewAI, AutoGen + more
+  <Card title="All Integrations" icon="puzzle-piece" href="/integrations/index">
+    Frameworks, providers, SIEM
   </Card>
   <Card title="Detection Rules" icon="shield-halved" href="/rules/overview">
     11 threat families, 514+ rules

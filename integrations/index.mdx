@@ -1,0 +1,238 @@
+---
+title: Integrations
+description: Connect RAXE to your AI stack - frameworks, LLM providers, and enterprise platforms
+---
+
+# Integrations
+
+RAXE integrates with your entire AI stack, from agent frameworks to LLM providers to enterprise SIEM platforms.
+
+<Info>
+All integrations use the same underlying detection engine with 460+ rules and ML-based classification. Choose the integration that matches your architecture.
+</Info>
+
+---
+
+## Agent Frameworks
+
+Protect multi-agent systems, RAG pipelines, and autonomous AI applications.
+
+<CardGroup cols={2}>
+  <Card title="LangChain" icon="link" href="/integrations/langchain">
+    **Most Popular** - Protect chains, agents, tools, memory, and RAG pipelines with callback-based scanning.
+    ```bash
+    pip install raxe[langchain]
+    ```
+  </Card>
+  <Card title="CrewAI" icon="users" href="/integrations/crewai">
+    Multi-agent crew protection with task-level scanning and inter-agent message validation.
+    ```bash
+    pip install raxe[crewai]
+    ```
+  </Card>
+  <Card title="AutoGen" icon="robot" href="/integrations/autogen">
+    Microsoft's multi-agent framework with conversation-level threat detection.
+    ```bash
+    pip install raxe[autogen]
+    ```
+  </Card>
+  <Card title="LlamaIndex" icon="database" href="/integrations/llamaindex">
+    RAG-focused protection for document ingestion, retrieval, and query pipelines.
+    ```bash
+    pip install raxe[llamaindex]
+    ```
+  </Card>
+  <Card title="LiteLLM" icon="bolt" href="/integrations/litellm">
+    **100+ LLM Providers** - Single integration for OpenAI, Anthropic, Azure, Bedrock, Vertex AI, and more.
+    ```bash
+    pip install raxe[litellm]
+    ```
+  </Card>
+  <Card title="DSPy" icon="brain" href="/integrations/dspy">
+    Stanford's declarative language model programming framework with signature-level protection.
+    ```bash
+    pip install raxe[dspy]
+    ```
+  </Card>
+  <Card title="Portkey" icon="server" href="/integrations/portkey">
+    AI gateway integration for unified observability and security across providers.
+    ```bash
+    pip install raxe[portkey]
+    ```
+  </Card>
+  <Card title="OpenClaw" icon="message-bot" href="/integrations/openclaw">
+    **Personal AI Assistant** - Protect your self-hosted AI across 13+ messaging channels.
+    ```bash
+    raxe openclaw install
+    ```
+  </Card>
+</CardGroup>
+
+---
+
+## LLM Provider Wrappers
+
+Drop-in replacements for native SDKs with built-in threat detection.
+
+<CardGroup cols={2}>
+  <Card title="OpenAI" icon="sparkles" href="/sdk/openai-wrapper">
+    Drop-in replacement for the OpenAI Python SDK. Same API, added security.
+    ```python
+    from raxe.wrappers import RaxeOpenAI
+    client = RaxeOpenAI()  # Use exactly like openai.OpenAI()
+    ```
+  </Card>
+  <Card title="Anthropic" icon="a" href="/sdk/anthropic-wrapper">
+    Drop-in replacement for the Anthropic Python SDK with Claude protection.
+    ```python
+    from raxe.wrappers import RaxeAnthropic
+    client = RaxeAnthropic()  # Use exactly like anthropic.Anthropic()
+    ```
+  </Card>
+</CardGroup>
+
+---
+
+## Enterprise SIEM
+
+Real-time threat data streaming to your security operations center.
+
+<CardGroup cols={3}>
+  <Card title="Splunk" icon="chart-mixed" href="/integrations/siem#splunk">
+    HTTP Event Collector (HEC) integration for real-time threat indexing.
+  </Card>
+  <Card title="CrowdStrike" icon="shield-halved" href="/integrations/siem#crowdstrike">
+    Falcon LogScale (Humio) integration for threat correlation.
+  </Card>
+  <Card title="Microsoft Sentinel" icon="microsoft" href="/integrations/siem#sentinel">
+    Azure Data Collector API for cloud-native SIEM integration.
+  </Card>
+  <Card title="ArcSight" icon="radar" href="/integrations/siem#arcsight">
+    SmartConnector CEF format for enterprise SIEM deployments.
+  </Card>
+  <Card title="CEF (Generic)" icon="file-code" href="/integrations/siem#cef">
+    Common Event Format over HTTP, UDP, or TCP/TLS syslog.
+  </Card>
+  <Card title="QRadar" icon="ibm" href="/integrations/siem#cef">
+    IBM QRadar via CEF format integration.
+  </Card>
+</CardGroup>
+
+---
+
+## Web Frameworks
+
+Protect HTTP endpoints and API routes.
+
+<CardGroup cols={3}>
+  <Card title="FastAPI" icon="bolt" href="/integrations/common-patterns#fastapi">
+    Middleware and dependency injection patterns.
+  </Card>
+  <Card title="Flask" icon="flask" href="/integrations/common-patterns#flask">
+    Before-request hooks and decorators.
+  </Card>
+  <Card title="Django" icon="d" href="/integrations/common-patterns#django">
+    Middleware and Django REST Framework integration.
+  </Card>
+</CardGroup>
+
+---
+
+## CI/CD & DevOps
+
+Shift-left security scanning in your deployment pipeline.
+
+<CardGroup cols={2}>
+  <Card title="GitHub Actions" icon="github" href="/integrations/ci-cd#github-actions">
+    Scan prompts and test data in pull requests.
+  </Card>
+  <Card title="Pre-commit Hooks" icon="code-branch" href="/integrations/ci-cd#pre-commit">
+    Catch threats before they're committed.
+  </Card>
+</CardGroup>
+
+---
+
+## LLM Providers via LiteLLM
+
+Through our [LiteLLM integration](/integrations/litellm), RAXE supports **100+ LLM providers** with a single integration:
+
+<Tabs>
+  <Tab title="Cloud Providers">
+    | Provider | Models |
+    |----------|--------|
+    | **OpenAI** | GPT-4o, GPT-4, GPT-3.5 |
+    | **Anthropic** | Claude 3.5, Claude 3, Claude 2 |
+    | **Azure OpenAI** | All Azure-hosted models |
+    | **Google Vertex AI** | Gemini Pro, PaLM 2 |
+    | **AWS Bedrock** | Claude, Llama, Titan |
+    | **Cohere** | Command, Embed |
+    | **Mistral AI** | Mistral Large, Medium, Small |
+  </Tab>
+  <Tab title="Open Source">
+    | Provider | Models |
+    |----------|--------|
+    | **Ollama** | Llama 3, Mistral, CodeLlama |
+    | **vLLM** | Any HuggingFace model |
+    | **HuggingFace** | 100k+ models |
+    | **Together AI** | Llama, Mixtral, CodeLlama |
+    | **Anyscale** | Llama, Mistral |
+    | **Replicate** | Llama, Stable Diffusion |
+  </Tab>
+  <Tab title="Specialized">
+    | Provider | Focus |
+    |----------|-------|
+    | **Groq** | Ultra-fast inference |
+    | **Perplexity** | Search-augmented |
+    | **DeepInfra** | Cost-optimized |
+    | **AI21** | Jurassic models |
+    | **NLP Cloud** | Enterprise NLP |
+  </Tab>
+</Tabs>
+
+---
+
+## Quick Comparison
+
+| Integration | Best For | Scan Points | Install |
+|-------------|----------|-------------|---------|
+| **LangChain** | Agent apps, RAG | Prompts, tools, memory | `pip install raxe[langchain]` |
+| **LiteLLM** | Multi-provider apps | All LLM calls | `pip install raxe[litellm]` |
+| **OpenAI Wrapper** | Simple OpenAI apps | Chat completions | `pip install raxe[wrappers]` |
+| **CrewAI** | Multi-agent crews | Agent messages, tasks | `pip install raxe[crewai]` |
+| **SIEM** | Enterprise SOC | All detections | See [SIEM docs](/integrations/siem) |
+
+---
+
+## Need Help Choosing?
+
+<AccordionGroup>
+  <Accordion title="I'm building a RAG application">
+    Use **LangChain** or **LlamaIndex** depending on your framework. Both provide deep integration with document retrieval and query pipelines.
+  </Accordion>
+  <Accordion title="I'm using multiple LLM providers">
+    Use **LiteLLM** - it provides a unified interface for 100+ providers with RAXE protection built in.
+  </Accordion>
+  <Accordion title="I just want to protect OpenAI calls">
+    Use the **OpenAI Wrapper** - it's a drop-in replacement with zero code changes beyond the import.
+  </Accordion>
+  <Accordion title="I need enterprise SIEM integration">
+    See our [SIEM documentation](/integrations/siem) for Splunk, CrowdStrike, Sentinel, and CEF integrations.
+  </Accordion>
+  <Accordion title="I'm building multi-agent systems">
+    Use **CrewAI** or **AutoGen** depending on your framework. Both support inter-agent message scanning.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## What's Next?
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Get protected in 60 seconds
+  </Card>
+  <Card title="Detection Rules" icon="shield" href="/rules/overview">
+    Understand what RAXE detects
+  </Card>
+</CardGroup>
