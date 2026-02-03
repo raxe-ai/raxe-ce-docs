@@ -156,5 +156,8 @@
   },
   "search": {
     "prompt": "Search RAXE docs..."
+  },
+  "seo": {
+    "indexing": "all"
   }
 }
