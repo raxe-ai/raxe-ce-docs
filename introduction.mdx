@@ -206,6 +206,7 @@ Performance varies by hardware and configuration. L1 (pattern matching) is faste
 ```python
 from raxe.sdk.client import Raxe
 from raxe.sdk.integrations.langchain import create_callback_handler
+from langchain_openai import ChatOpenAI
 
 # Protect a LangChain agent
 handler = create_callback_handler(
