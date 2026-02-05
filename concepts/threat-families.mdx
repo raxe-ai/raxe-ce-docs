@@ -8,7 +8,7 @@ description: "The threat categories RAXE detects"
 RAXE uses two classification systems:
 
 - **L1 (Rule-Based):** 7 threat families based on regex rules
-- **L2 (ML-Based):** 15 threat families from neural classifier
+- **L2 (ML-Based):** 14 threat families from neural classifier (plus "benign" as a classification output)
 
 ## L1: Rule-Based Families
 
@@ -160,7 +160,7 @@ elif result.severity == "high":
 
 ## L2: ML-Based Families
 
-The L2 neural classifier uses **15 threat families** trained on real-world attack data:
+The L2 neural classifier uses **14 threat families** trained on real-world attack data:
 
 | Family | Description |
 |--------|-------------|
@@ -178,7 +178,10 @@ The L2 neural classifier uses **15 threat families** trained on real-world attac
 | `rogue_behavior` | Unintended agent actions |
 | `toxic_or_policy_violating_content` | Harmful output |
 | `other_security` | Other security concerns |
-| `benign` | No threat detected |
+
+<Note>
+The classifier also outputs `benign` when no threat is detected. This is a classification result, not a threat family.
+</Note>
 
 ### L2 Severity Levels
 
@@ -194,15 +197,41 @@ The L2 model outputs **3 severity classes**:
 L2 confidence scores are mapped to the 5-level API severity (CRITICAL → INFO) for consistency with L1. See [Detection Engine](/concepts/detection-engine#severity-mapping) for threshold details.
 </Note>
 
-### L2 Techniques
+### L2 Attack Techniques
 
-The L2 model also classifies **35 specific attack techniques**, including:
+The L2 model classifies **35 specific attack techniques** that map to the threat families above. Examples include:
+
 - `instruction_override` - Direct instruction manipulation
 - `role_or_persona_manipulation` - Persona hijacking (DAN, etc.)
 - `system_prompt_or_config_extraction` - Extracting hidden prompts
 - `encoding_or_obfuscation` - l33t speak, Base64, etc.
 - `indirect_injection_via_content` - Attacks via external content
 - `tool_abuse_or_unintended_action` - Misusing agent tools
+- `goal_or_task_hijack` - Redirecting agent objectives
+- `privilege_escalation_attempt` - Gaining elevated access
+- `memory_or_context_manipulation` - Corrupting agent state
+- `social_engineering` - Manipulating human trust
+
+### L2 Harm Types
+
+The L2 model also performs **multilabel classification** across **10 harm types**:
+
+| Harm Type | Description |
+|-----------|-------------|
+| `privacy_or_pii` | Personal data exposure |
+| `cybersecurity_or_malware` | Malicious code, hacking |
+| `violence_or_physical_harm` | Violence, weapons |
+| `hate_or_harassment` | Hate speech, discrimination |
+| `misinformation_or_disinfo` | False information |
+| `crime_or_fraud` | Illegal activities, scams |
+| `sexual_content` | Adult content |
+| `self_harm_or_suicide` | Self-harm content |
+| `cbrn_or_weapons` | Chemical, biological, nuclear |
+| `other_harm` | Other harmful content |
+
+<Note>
+A single prompt can trigger multiple harm types (multilabel). For example, a phishing attempt might trigger both `crime_or_fraud` and `privacy_or_pii`.
+</Note>
 
 <Note>
 L1 and L2 use different classification systems. L1 provides fast, precise pattern matching while L2 provides semantic understanding of novel attacks.

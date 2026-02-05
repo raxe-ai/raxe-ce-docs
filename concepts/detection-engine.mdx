@@ -65,7 +65,7 @@ The ML model uses 5 specialized classification heads:
 | Head | Classes | Description |
 |------|---------|-------------|
 | **Binary** | 2 | Threat vs safe |
-| **Threat Family** | 15 | Attack category (prompt_injection, jailbreak, etc.) |
+| **Threat Family** | 14 | Attack category (prompt_injection, jailbreak, etc.) |
 | **Severity** | 3 | none / moderate / severe |
 | **Technique** | 35 | Specific attack method |
 | **Harm Types** | 10 | Multilabel harm classification |
@@ -111,7 +111,7 @@ When combining L1 and L2 results, the highest severity wins.
 
 ### L2 Threat Families
 
-The L2 model classifies threats into 15 families:
+The L2 model classifies threats into 14 families:
 
 - `prompt_injection` - Instruction override attacks
 - `jailbreak` - Bypassing safety guidelines
@@ -127,10 +127,9 @@ The L2 model classifies threats into 15 families:
 - `rogue_behavior` - Unintended agent actions
 - `toxic_or_policy_violating_content` - Harmful output
 - `other_security` - Other security concerns
-- `benign` - No threat
 
 <Note>
-L2 families differ from L1 rule families. L1 uses 7 families (PI, JB, PII, CMD, ENC, HC, RAG) while L2 uses 15 semantic categories trained on attack data.
+The classifier also outputs `benign` when no threat is detected. This is a classification result, not a threat family. L2 families differ from L1 rule families. L1 uses 7 families (PI, JB, PII, CMD, ENC, HC, RAG) while L2 uses 14 semantic threat categories trained on attack data.
 </Note>
 
 ## Detection Flow
