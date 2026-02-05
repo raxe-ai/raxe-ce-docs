@@ -18,6 +18,12 @@ All integrations use the same underlying detection engine with 514+ rules and ML
 Protect multi-agent systems, RAG pipelines, and autonomous AI applications.
 
 <CardGroup cols={2}>
+  <Card title="MCP Gateway" icon="shield-check" href="/integrations/mcp">
+    **Claude Desktop & Cursor** - Transparent security proxy for Model Context Protocol servers.
+    ```bash
+    pip install raxe[mcp]
+    ```
+  </Card>
   <Card title="LangChain" icon="link" href="/integrations/langchain">
     **Most Popular** - Protect chains, agents, tools, memory, and RAG pipelines with callback-based scanning.
     ```bash
@@ -196,6 +202,7 @@ Through our [LiteLLM integration](/integrations/litellm), RAXE supports **100+ L
 
 | Integration | Best For | Scan Points | Install |
 |-------------|----------|-------------|---------|
+| **MCP Gateway** | Claude Desktop, Cursor | Tool calls, responses | `pip install raxe[mcp]` |
 | **LangChain** | Agent apps, RAG | Prompts, tools, memory | `pip install raxe[langchain]` |
 | **LiteLLM** | Multi-provider apps | All LLM calls | `pip install raxe[litellm]` |
 | **OpenAI Wrapper** | Simple OpenAI apps | Chat completions | `pip install raxe[wrappers]` |
@@ -207,6 +214,9 @@ Through our [LiteLLM integration](/integrations/litellm), RAXE supports **100+ L
 ## Need Help Choosing?
 
 <AccordionGroup>
+  <Accordion title="I'm using Claude Desktop or Cursor">
+    Use the **MCP Gateway** - it acts as a transparent security proxy for any MCP server, scanning all tool calls and responses without modifying your existing setup.
+  </Accordion>
   <Accordion title="I'm building a RAG application">
     Use **LangChain** or **LlamaIndex** depending on your framework. Both provide deep integration with document retrieval and query pipelines.
   </Accordion>

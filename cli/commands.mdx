@@ -234,6 +234,104 @@ Creates:
 
 ---
 
+## raxe mcp
+
+MCP (Model Context Protocol) integration commands.
+
+### raxe mcp gateway
+
+Start the MCP Security Gateway to protect MCP servers.
+
+```bash
+raxe mcp gateway -u "npx @modelcontextprotocol/server-filesystem /tmp"
+```
+
+#### Options
+
+| Option | Description |
+|--------|-------------|
+| `-u, --upstream` | Upstream MCP server command (required unless using --config) |
+| `-c, --config` | Path to gateway configuration file |
+| `--on-threat` | Action on threat: `log`, `block`, `warn` (default: `log`) |
+| `--severity-threshold` | Minimum severity: `LOW`, `MEDIUM`, `HIGH`, `CRITICAL` (default: `HIGH`) |
+| `--no-l2` | Disable ML detection for faster scanning |
+| `-v, --verbose` | Enable verbose logging |
+
+#### Examples
+
+```bash
+# Protect a filesystem server
+raxe mcp gateway -u "npx @modelcontextprotocol/server-filesystem /tmp"
+
+# With blocking enabled
+raxe mcp gateway -u "npx @modelcontextprotocol/server-filesystem /tmp" --on-threat block
+
+# From config file
+raxe mcp gateway --config mcp-security.yaml
+
+# Fast mode (L1 only)
+raxe mcp gateway -u "npx @modelcontextprotocol/server-filesystem /tmp" --no-l2
+```
+
+### raxe mcp serve
+
+Start the MCP server (RAXE as a tool provider).
+
+```bash
+raxe mcp serve
+```
+
+#### Options
+
+| Option | Description |
+|--------|-------------|
+| `--transport` | Transport protocol: `stdio` (default: `stdio`) |
+| `--log-level` | Log level: `debug`, `info`, `warn`, `error` (default: `info`) |
+| `-q, --quiet` | Suppress startup banner |
+
+### raxe mcp audit
+
+Audit an MCP configuration file for security issues.
+
+```bash
+raxe mcp audit ~/.config/claude/claude_desktop_config.json
+```
+
+#### Options
+
+| Option | Description |
+|--------|-------------|
+| `--json` | Output results as JSON |
+
+#### Example Output
+
+```
+MCP Configuration Audit
+
+┌──────────┬────────────┬──────────────────────────────────────┬──────────────────────────────────┐
+│ Severity │ Server     │ Issue                                │ Recommendation                   │
+├──────────┼────────────┼──────────────────────────────────────┼──────────────────────────────────┤
+│ CRITICAL │ shell      │ Server has shell execution capabili… │ Use RAXE gateway to monitor      │
+│ HIGH     │ filesystem │ Filesystem server has access to se…  │ Restrict to specific directories │
+└──────────┴────────────┴──────────────────────────────────────┴──────────────────────────────────┘
+```
+
+### raxe mcp generate-config
+
+Generate a sample gateway configuration file.
+
+```bash
+raxe mcp generate-config
+```
+
+#### Options
+
+| Option | Description |
+|--------|-------------|
+| `-o, --output` | Output file path (default: `mcp-security.yaml`) |
+
+---
+
 ## raxe export
 
 Export scan history.

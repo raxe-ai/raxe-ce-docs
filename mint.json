@@ -61,6 +61,7 @@
       "group": "Integrations",
       "pages": [
         "integrations/index",
+        "integrations/mcp",
         "integrations/langchain",
         "integrations/crewai",
         "integrations/autogen",

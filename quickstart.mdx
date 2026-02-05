@@ -92,8 +92,30 @@ guard = create_autogen_guard(raxe)
 guard.register(agent)
 ```
 
+### MCP Server Protection (Claude Desktop/Cursor)
+
+Protect any MCP server with a single command:
+
+```bash
+pip install raxe[mcp]
+raxe mcp gateway -u "npx @modelcontextprotocol/server-filesystem /tmp"
+```
+
+Then add to your Claude Desktop config (`~/.config/claude/claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "protected-filesystem": {
+      "command": "raxe",
+      "args": ["mcp", "gateway", "-u", "npx @modelcontextprotocol/server-filesystem /tmp"]
+    }
+  }
+}
+```
+
 <Tip>
-All integrations run in **log-only mode** by default. Set `block_on_threats=True` to block detected threats.
+All integrations run in **log-only mode** by default. Set `block_on_threats=True` (or `--on-threat block` for CLI) to block detected threats.
 </Tip>
 
 ## Direct Scanning
@@ -169,6 +191,9 @@ If a threat is detected, `RaxeBlockedError` is raised **before** the API call is
 ## What's Next?
 
 <CardGroup cols={2}>
+  <Card title="MCP Gateway" icon="shield-check" href="/integrations/mcp">
+    Protect Claude Desktop & Cursor
+  </Card>
   <Card title="LangChain Guide" icon="link" href="/integrations/langchain">
     Full LangChain integration
   </Card>
@@ -177,8 +202,5 @@ If a threat is detected, `RaxeBlockedError` is raised **before** the API call is
   </Card>
   <Card title="Detection Rules" icon="shield" href="/rules/overview">
     Explore 514+ detection rules
-  </Card>
-  <Card title="Policies" icon="file-contract" href="/concepts/policies">
-    Configure threat handling
   </Card>
 </CardGroup>
