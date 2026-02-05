@@ -50,84 +50,108 @@
   "navigation": [
     {
       "group": "Getting Started",
+      "icon": "rocket",
       "pages": [
         "introduction",
+        "why-raxe",
         "quickstart",
         "installation",
         "configuration"
       ]
     },
     {
-      "group": "Integrations",
+      "group": "Protect Your AI",
+      "icon": "shield-check",
       "pages": [
         "integrations/index",
-        "integrations/mcp",
-        "integrations/langchain",
-        "integrations/crewai",
-        "integrations/autogen",
-        "integrations/llamaindex",
-        "integrations/litellm",
-        "integrations/dspy",
-        "integrations/huggingface",
-        "integrations/portkey",
-        "integrations/openclaw"
+        {
+          "group": "Agent Frameworks",
+          "icon": "robot",
+          "pages": [
+            "integrations/mcp",
+            "integrations/langchain",
+            "integrations/crewai",
+            "integrations/autogen",
+            "integrations/llamaindex",
+            "integrations/dspy",
+            "integrations/portkey",
+            "integrations/openclaw"
+          ]
+        },
+        {
+          "group": "LLM Providers",
+          "icon": "sparkles",
+          "pages": [
+            "integrations/litellm",
+            "sdk/openai-wrapper",
+            "sdk/anthropic-wrapper",
+            "integrations/huggingface"
+          ]
+        },
+        {
+          "group": "Web & CI/CD",
+          "icon": "code",
+          "pages": [
+            "integrations/common-patterns",
+            "integrations/ci-cd"
+          ]
+        }
       ]
     },
     {
-      "group": "Core Concepts",
+      "group": "How It Works",
+      "icon": "lightbulb",
       "pages": [
         "concepts/detection-engine",
         "concepts/threat-families",
-        "concepts/policies",
-        "concepts/multi-tenant",
-        "concepts/suppressions",
+        "rules/overview",
         "concepts/architecture"
       ]
     },
     {
-      "group": "SDK",
+      "group": "Guides",
+      "icon": "map",
+      "pages": [
+        "guides/migration",
+        "guides/production-checklist"
+      ]
+    },
+    {
+      "group": "Advanced",
+      "icon": "wrench",
       "pages": [
         "sdk/overview",
         "sdk/python",
         "sdk/agentic-scanning",
         "sdk/async",
-        "sdk/openai-wrapper",
-        "sdk/anthropic-wrapper"
-      ]
-    },
-    {
-      "group": "Detection Rules",
-      "pages": [
-        "rules/overview",
-        "rules/custom-rules"
+        "rules/custom-rules",
+        "concepts/policies",
+        "concepts/suppressions"
       ]
     },
     {
       "group": "Enterprise",
+      "icon": "building",
       "pages": [
+        "integrations/siem",
         "concepts/mssp-integration",
-        "integrations/siem"
+        "concepts/multi-tenant"
       ]
     },
     {
-      "group": "CI/CD & Patterns",
+      "group": "Reference",
+      "icon": "book",
       "pages": [
-        "integrations/ci-cd",
-        "integrations/common-patterns"
-      ]
-    },
-    {
-      "group": "Resources",
-      "pages": [
-        "resources/changelog",
-        "resources/performance",
-        "resources/error-codes",
         "resources/troubleshooting",
-        "resources/faq"
+        "resources/faq",
+        "resources/error-codes",
+        "resources/performance",
+        "resources/changelog"
       ]
     },
     {
       "group": "API Reference",
+      "icon": "code",
       "pages": [
         "api-reference/overview",
         "api-reference/raxe-client",
@@ -137,6 +161,7 @@
     },
     {
       "group": "CLI Reference",
+      "icon": "terminal",
       "pages": [
         "cli/overview",
         "cli/commands"

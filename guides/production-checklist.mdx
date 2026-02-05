@@ -1,0 +1,666 @@
+---
+title: "Production Deployment Checklist"
+description: "Deploy RAXE safely to production with this comprehensive checklist"
+---
+
+## Overview
+
+Moving from development to production requires careful planning. This guide walks you through a safe, gradual rollout that minimizes risk while maximizing protection.
+
+<Info>
+RAXE defaults to **log-only mode** for a reason. Take time to understand your traffic patterns before enabling blocking.
+</Info>
+
+---
+
+## Pre-Deployment Checklist
+
+Before deploying to production, verify each item:
+
+<Steps>
+  <Step title="Run in Log-Only Mode">
+    Deploy RAXE in shadow mode for at least **1 week** before enabling blocking. This reveals:
+    - False positive patterns specific to your application
+    - Actual threat volume and severity distribution
+    - Performance impact on your infrastructure
+
+    ```python
+    from raxe import Raxe
+
+    # Default is already log-only (block_on_threat=False)
+    raxe = Raxe()
+    ```
+  </Step>
+
+  <Step title="Review Detection Logs">
+    Analyze detections for false positives:
+
+    ```bash
+    # View detection statistics
+    raxe stats
+
+    # Review recent detections
+    raxe history --last 7d --threats-only
+    ```
+
+    Look for patterns in false positives. Common causes:
+    - Authentication flows with "ignore" language
+    - Testing/debugging prompts
+    - Domain-specific terminology
+  </Step>
+
+  <Step title="Configure Severity Threshold">
+    Not all detections need blocking. Start with a conservative threshold:
+
+    ```yaml
+    # ~/.raxe/policies.yaml
+    policies:
+      # Only block CRITICAL initially
+      - name: "block-critical"
+        action: BLOCK
+        target:
+          severity: CRITICAL
+        priority: 100
+
+      # Log everything else
+      - name: "log-other"
+        action: LOG
+        target:
+          severity: "*"
+        priority: 0
+    ```
+  </Step>
+
+  <Step title="Set Up Monitoring">
+    Configure alerts for security-critical events:
+
+    ```python
+    import logging
+    from raxe import Raxe
+
+    logger = logging.getLogger("raxe.security")
+    raxe = Raxe()
+
+    def scan_with_monitoring(prompt: str) -> bool:
+        result = raxe.scan(prompt)
+
+        if result.has_threats:
+            logger.warning(
+                "threat_detected",
+                extra={
+                    "severity": result.severity,
+                    "rules": [d.rule_id for d in result.detections],
+                    "duration_ms": result.duration_ms,
+                }
+            )
+        return not result.has_threats
+    ```
+
+    For enterprise setups, configure [SIEM integration](/integrations/siem).
+  </Step>
+
+  <Step title="Test with Real Prompts">
+    Scan a representative sample of your actual user prompts:
+
+    ```python
+    from raxe import AsyncRaxe
+
+    async def audit_existing_prompts(prompts: list[str]):
+        async with AsyncRaxe() as raxe:
+            results = await raxe.scan_batch(prompts)
+
+            threats = [r for r in results if r.has_threats]
+            print(f"Threats found: {len(threats)}/{len(prompts)}")
+            print(f"False positive rate estimate: Review {len(threats)} detections")
+    ```
+
+    Review each detection manually before enabling blocking.
+  </Step>
+</Steps>
+
+---
+
+## Shadow Mode Pattern
+
+Shadow mode lets you observe RAXE's behavior without changing your application's functionality.
+
+### Basic Shadow Mode
+
+```python
+from raxe import Raxe
+
+raxe = Raxe()
+
+def process_request(prompt: str) -> str:
+    # Shadow scan - just logs, doesn't affect the flow
+    result = raxe.scan(prompt)
+
+    if result.has_threats:
+        # Log for later analysis (don't block yet)
+        log_threat(result)
+
+    # Original flow unchanged
+    return llm.generate(prompt)
+```
+
+### Shadow Mode with Metrics
+
+Track what *would have been blocked* without actually blocking:
+
+```python
+from raxe import Raxe
+from dataclasses import dataclass
+
+@dataclass
+class ShadowStats:
+    total_scans: int = 0
+    would_block: int = 0
+    false_positives_marked: int = 0
+
+stats = ShadowStats()
+raxe = Raxe()
+
+def shadow_scan(prompt: str) -> str:
+    stats.total_scans += 1
+    result = raxe.scan(prompt)
+
+    if result.has_threats and result.severity in ["HIGH", "CRITICAL"]:
+        stats.would_block += 1
+        # Don't actually block - just track
+        log_shadow_block(prompt, result)
+
+    # Always proceed with the request
+    return llm.generate(prompt)
+
+# Later, review shadow stats
+def report():
+    block_rate = stats.would_block / stats.total_scans * 100
+    print(f"Would-block rate: {block_rate:.2f}%")
+    print(f"Review {stats.would_block} detections for false positives")
+```
+
+### A/B Testing Pattern
+
+Compare detection accuracy on a subset of traffic:
+
+```python
+import random
+from raxe import Raxe
+
+raxe = Raxe()
+ENABLE_BLOCKING_PERCENT = 10  # Start with 10%
+
+def process_with_ab_test(prompt: str) -> str:
+    result = raxe.scan(prompt)
+
+    if result.has_threats:
+        in_test_group = random.random() < (ENABLE_BLOCKING_PERCENT / 100)
+
+        if in_test_group and result.severity == "CRITICAL":
+            # Test group: actually block
+            raise SecurityError(f"Blocked: {result.severity}")
+        else:
+            # Control group: just log
+            log_threat(result, blocked=in_test_group)
+
+    return llm.generate(prompt)
+```
+
+---
+
+## Monitoring Setup
+
+### View Detection Statistics
+
+```bash
+# Overall statistics
+raxe stats
+
+# Output:
+# Total scans: 125,432
+# Threats detected: 847 (0.68%)
+#
+# By severity:
+#   CRITICAL: 12
+#   HIGH: 89
+#   MEDIUM: 234
+#   LOW: 512
+#
+# Top rules triggered:
+#   pi-001 (Prompt Injection): 423
+#   jb-003 (Jailbreak): 156
+#   pii-012 (PII Leakage): 98
+```
+
+### Detection History
+
+```bash
+# Recent detections
+raxe history --last 24h
+
+# Threats only, with details
+raxe history --last 7d --threats-only --verbose
+
+# Export for analysis
+raxe history --last 30d --format json > detections.json
+```
+
+### Structured Logging
+
+```python
+import structlog
+from raxe import Raxe
+
+logger = structlog.get_logger("raxe.security")
+raxe = Raxe()
+
+def scan_with_logging(prompt: str, user_id: str = None):
+    result = raxe.scan(prompt)
+
+    log_data = {
+        "user_id": user_id,
+        "has_threats": result.has_threats,
+        "severity": result.severity,
+        "duration_ms": result.duration_ms,
+    }
+
+    if result.has_threats:
+        log_data["rules"] = [d.rule_id for d in result.detections]
+        logger.warning("threat_detected", **log_data)
+    else:
+        logger.debug("scan_clean", **log_data)
+
+    return result
+```
+
+### Alert Thresholds
+
+Set up alerts for these conditions:
+
+| Condition | Threshold | Action |
+|-----------|-----------|--------|
+| CRITICAL detection | Any | Page on-call |
+| HIGH detection rate | >1% of traffic | Alert security team |
+| Scan latency P95 | >10ms | Investigate performance |
+| Detection spike | 5x normal rate | Review for attack |
+
+---
+
+## Gradual Rollout Plan
+
+<Warning>
+Never go from log-only to full blocking in one step. Follow the gradual rollout below.
+</Warning>
+
+### Week 1: Observation
+
+Deploy in pure log-only mode:
+
+```yaml
+# policies.yaml - Week 1
+policies:
+  - name: "log-all"
+    action: LOG
+    target:
+      severity: "*"
+    priority: 100
+```
+
+**Goal:** Collect baseline metrics, identify false positive patterns.
+
+### Week 2: Tune and Suppress
+
+Add suppressions for verified false positives:
+
+```yaml
+# .raxe/suppressions.yaml
+version: "1.0"
+
+suppressions:
+  - pattern: "pi-001"
+    reason: "Auth flow rate limit message triggers false positive"
+    expires: "2026-03-01"
+
+  - pattern: "pii-042"
+    reason: "Test accounts use fake SSNs matching pattern"
+```
+
+**Goal:** Reduce false positive rate to <1%.
+
+### Week 3: Block CRITICAL Only
+
+Enable blocking for highest-severity threats:
+
+```yaml
+# policies.yaml - Week 3
+policies:
+  - name: "block-critical"
+    action: BLOCK
+    target:
+      severity: CRITICAL
+    priority: 100
+
+  - name: "flag-high"
+    action: FLAG
+    target:
+      severity: HIGH
+    priority: 90
+
+  - name: "log-other"
+    action: LOG
+    target:
+      severity: "*"
+    priority: 0
+```
+
+**Goal:** Verify blocking works correctly with minimal user impact.
+
+### Week 4: Expand Blocking
+
+If Week 3 showed no issues, expand to HIGH severity:
+
+```yaml
+# policies.yaml - Week 4
+policies:
+  - name: "block-critical-high"
+    action: BLOCK
+    target:
+      severity: [CRITICAL, HIGH]
+    priority: 100
+
+  - name: "flag-medium"
+    action: FLAG
+    target:
+      severity: MEDIUM
+    priority: 90
+
+  - name: "log-low"
+    action: LOG
+    target:
+      severity: LOW
+    priority: 80
+```
+
+### Production-Ready
+
+After successful gradual rollout:
+
+```python
+from raxe import Raxe
+from raxe.sdk.integrations import create_langchain_handler
+
+raxe = Raxe()
+
+# Now safe to enable blocking
+handler = create_langchain_handler(
+    raxe,
+    block_on_threats=True,  # Production blocking enabled
+    severity_threshold="HIGH"  # Block HIGH and CRITICAL
+)
+```
+
+---
+
+## Handling False Positives
+
+### Identifying False Positives
+
+Signs of a false positive:
+- Legitimate user query matches a pattern
+- Domain-specific terminology triggers detection
+- Test data contains patterns that look like attacks
+
+### Suppression Options
+
+**Option 1: Inline suppression (temporary)**
+
+```python
+# Suppress for this scan only
+result = raxe.scan(prompt, suppress=["pi-001"])
+```
+
+**Option 2: File-based suppression (persistent)**
+
+```yaml
+# .raxe/suppressions.yaml
+suppressions:
+  - pattern: "pi-001"
+    reason: "Rate limit messages contain 'ignore' keyword"
+    expires: "2026-06-01"
+```
+
+**Option 3: Action override (review instead of suppress)**
+
+```yaml
+suppressions:
+  - pattern: "hc-*"
+    action: FLAG  # Still visible, but won't block
+    reason: "Harmful content requires human review"
+```
+
+### When to Suppress vs. Tune
+
+| Scenario | Action |
+|----------|--------|
+| Single user's legitimate query | Suppress specific rule |
+| Multiple users hitting same FP | Suppress with reason |
+| Rule too aggressive generally | [Report to RAXE team](https://github.com/raxe-ai/raxe-ce/issues) |
+| Domain-specific terminology | Create custom allowlist |
+
+---
+
+## Fail-Open vs Fail-Closed
+
+Choose your failure mode based on your risk tolerance.
+
+### Fail-Open (Recommended for Most)
+
+If RAXE has an error, allow the request:
+
+```python
+from raxe import Raxe
+from raxe.sdk.exceptions import RaxeException
+
+raxe = Raxe()
+
+def scan_fail_open(prompt: str) -> str:
+    try:
+        result = raxe.scan(prompt, timeout=5.0)
+        if result.has_threats:
+            return handle_threat(result)
+    except RaxeException as e:
+        # Log the error but allow the request
+        logger.error(f"RAXE error (allowing request): {e}")
+
+    return llm.generate(prompt)
+```
+
+**Use when:** Availability is critical, you have other security layers.
+
+### Fail-Closed (High-Security)
+
+If RAXE has an error, block the request:
+
+```python
+def scan_fail_closed(prompt: str) -> str:
+    try:
+        result = raxe.scan(prompt, timeout=5.0)
+        if result.has_threats:
+            raise SecurityError("Threat detected")
+        return llm.generate(prompt)
+    except RaxeException as e:
+        # Block on any error
+        logger.error(f"RAXE error (blocking request): {e}")
+        raise SecurityError("Security check failed")
+```
+
+**Use when:** Security is paramount, false negatives are unacceptable.
+
+### Circuit Breaker Pattern
+
+Automatically switch to fail-open if RAXE is having issues:
+
+```python
+from datetime import datetime, timedelta
+
+class RaxeCircuitBreaker:
+    def __init__(self, failure_threshold: int = 5, reset_timeout: int = 60):
+        self.failure_count = 0
+        self.failure_threshold = failure_threshold
+        self.reset_timeout = timedelta(seconds=reset_timeout)
+        self.last_failure = None
+        self.raxe = Raxe()
+
+    def scan(self, prompt: str) -> str:
+        # Check if circuit should reset
+        if self.last_failure and datetime.now() - self.last_failure > self.reset_timeout:
+            self.failure_count = 0
+
+        # Circuit is open - fail open
+        if self.failure_count >= self.failure_threshold:
+            logger.warning("Circuit breaker open - bypassing RAXE")
+            return llm.generate(prompt)
+
+        try:
+            result = self.raxe.scan(prompt, timeout=2.0)
+            if result.has_threats:
+                raise SecurityError("Threat detected")
+            return llm.generate(prompt)
+        except RaxeException:
+            self.failure_count += 1
+            self.last_failure = datetime.now()
+            logger.error(f"RAXE failure {self.failure_count}/{self.failure_threshold}")
+            return llm.generate(prompt)  # Fail open
+```
+
+---
+
+## Performance Tuning
+
+### When to Disable L2
+
+L2 (ML-based detection) adds ~3ms latency. Disable it when:
+- Latency budget is <1ms
+- You have extremely high throughput (>10,000 req/sec)
+- L1 rules provide sufficient coverage for your use case
+
+```python
+# Disable L2 for speed-critical paths
+raxe = Raxe(l2_enabled=False)
+
+# Or per-scan
+result = raxe.scan(prompt, l2_enabled=False)
+```
+
+### Batch Scanning
+
+For bulk processing, use batch scanning:
+
+```python
+from raxe import AsyncRaxe
+
+async def process_batch(prompts: list[str]):
+    async with AsyncRaxe() as raxe:
+        results = await raxe.scan_batch(
+            prompts,
+            max_concurrency=20  # Tune based on your system
+        )
+
+        for prompt, result in zip(prompts, results):
+            if not result.has_threats:
+                await process_safe_prompt(prompt)
+```
+
+### Async for High Throughput
+
+Use `AsyncRaxe` for non-blocking scans:
+
+```python
+from raxe import AsyncRaxe
+from fastapi import FastAPI
+
+app = FastAPI()
+raxe: AsyncRaxe = None
+
+@app.on_event("startup")
+async def startup():
+    global raxe
+    raxe = AsyncRaxe(cache_size=1000)  # Enable caching
+
+@app.on_event("shutdown")
+async def shutdown():
+    await raxe.close()
+
+@app.post("/chat")
+async def chat(prompt: str):
+    result = await raxe.scan(prompt)
+    if result.has_threats:
+        return {"error": "Blocked", "severity": result.severity}
+    return {"response": await llm.generate_async(prompt)}
+```
+
+### Caching for Repeated Prompts
+
+If users send similar prompts, enable caching:
+
+```python
+raxe = AsyncRaxe(
+    cache_size=1000,   # Cache up to 1000 results
+    cache_ttl=300.0    # 5 minute TTL
+)
+
+# Check hit rate periodically
+stats = raxe.cache_stats()
+print(f"Cache hit rate: {stats['hit_rate']:.1%}")
+```
+
+---
+
+## Production Checklist Summary
+
+<AccordionGroup>
+
+<Accordion title="Before Deployment">
+- [ ] Ran in log-only mode for 1+ week
+- [ ] Reviewed detection logs for false positives
+- [ ] Created suppressions for verified FPs
+- [ ] Tested with representative real prompts
+- [ ] Configured monitoring and alerts
+</Accordion>
+
+<Accordion title="Deployment">
+- [ ] Start with CRITICAL-only blocking
+- [ ] Monitor for 3-7 days
+- [ ] Expand to HIGH severity
+- [ ] Review user feedback
+- [ ] Gradually expand blocking scope
+</Accordion>
+
+<Accordion title="Ongoing">
+- [ ] Review suppression list quarterly
+- [ ] Monitor false positive rate
+- [ ] Track detection metrics
+- [ ] Update RAXE version regularly
+- [ ] Review new rule releases
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="SIEM Integration" icon="chart-network" href="/integrations/siem">
+    Forward detections to your security platform
+  </Card>
+  <Card title="Policies" icon="file-contract" href="/concepts/policies">
+    Fine-tune threat handling rules
+  </Card>
+  <Card title="Suppressions" icon="filter" href="/concepts/suppressions">
+    Manage false positives
+  </Card>
+  <Card title="Performance" icon="gauge-high" href="/resources/performance">
+    Optimize for your workload
+  </Card>
+</CardGroup>

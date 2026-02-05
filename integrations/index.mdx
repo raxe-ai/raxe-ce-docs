@@ -1,15 +1,120 @@
 ---
-title: Integrations
-description: Connect RAXE to your AI stack - frameworks, LLM providers, and enterprise platforms
+title: Choose Your Integration
+description: Find the right RAXE integration for your AI stack in 30 seconds
 ---
 
-# Integrations
+# Choose Your Integration
 
-RAXE integrates with your entire AI stack, from agent frameworks to LLM providers to enterprise SIEM platforms.
+RAXE integrates with your entire AI stack. Use this guide to find the right integration for your use case.
 
 <Info>
-All integrations use the same underlying detection engine with 514+ rules and ML-based classification. Choose the integration that matches your architecture.
+All integrations use the same underlying detection engine with 515+ rules and ML-based classification. Choose the integration that matches your architecture.
 </Info>
+
+---
+
+## Quick Decision Guide
+
+Answer one question to find your integration:
+
+<AccordionGroup>
+  <Accordion title="I use Claude Desktop, Cursor, or other MCP tools" icon="shield-check">
+    **Use: [MCP Gateway](/integrations/mcp)**
+
+    The MCP Gateway acts as a transparent security proxy for any Model Context Protocol server. It scans all tool calls and responses without modifying your existing setup.
+
+    ```bash
+    pip install raxe[mcp]
+    ```
+  </Accordion>
+
+  <Accordion title="I'm building with LangChain" icon="link">
+    **Use: [LangChain Integration](/integrations/langchain)**
+
+    Callback-based scanning for chains, agents, tools, memory, and RAG pipelines. The most comprehensive integration for LangChain applications.
+
+    ```bash
+    pip install raxe[langchain]
+    ```
+  </Accordion>
+
+  <Accordion title="I use multiple LLM providers (OpenAI, Anthropic, Azure, etc.)" icon="bolt">
+    **Use: [LiteLLM Integration](/integrations/litellm)**
+
+    Single integration for 100+ LLM providers. If you're using LiteLLM as your abstraction layer, this is the integration for you.
+
+    ```bash
+    pip install raxe[litellm]
+    ```
+  </Accordion>
+
+  <Accordion title="I just use OpenAI directly" icon="sparkles">
+    **Use: [OpenAI Wrapper](/sdk/openai-wrapper)**
+
+    Drop-in replacement for the OpenAI Python SDK. Change one import line.
+
+    ```python
+    # Before
+    from openai import OpenAI
+    # After
+    from raxe.wrappers import RaxeOpenAI as OpenAI
+    ```
+  </Accordion>
+
+  <Accordion title="I just use Anthropic/Claude directly" icon="message">
+    **Use: [Anthropic Wrapper](/sdk/anthropic-wrapper)**
+
+    Drop-in replacement for the Anthropic Python SDK.
+
+    ```python
+    # Before
+    from anthropic import Anthropic
+    # After
+    from raxe.wrappers import RaxeAnthropic as Anthropic
+    ```
+  </Accordion>
+
+  <Accordion title="I'm building multi-agent systems" icon="users">
+    **Choose based on your framework:**
+
+    | Framework | Integration |
+    |-----------|-------------|
+    | CrewAI | [CrewAI Integration](/integrations/crewai) |
+    | AutoGen | [AutoGen Integration](/integrations/autogen) |
+    | LangGraph | [LangChain Integration](/integrations/langchain) |
+    | Custom | [SDK Direct](/sdk/python) |
+  </Accordion>
+
+  <Accordion title="I need enterprise SIEM integration" icon="building">
+    **Use: [SIEM Integration](/integrations/siem)**
+
+    Stream threat data to Splunk, CrowdStrike, Microsoft Sentinel, ArcSight, or any CEF-compatible SIEM.
+  </Accordion>
+
+  <Accordion title="I want to scan prompts in CI/CD" icon="code-branch">
+    **Use: [CI/CD Integration](/integrations/ci-cd)**
+
+    Shift-left security scanning with GitHub Actions, pre-commit hooks, or custom pipelines.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Integration Comparison
+
+| Integration | Best For | Effort | Scan Coverage |
+|-------------|----------|--------|---------------|
+| [MCP Gateway](/integrations/mcp) | Claude Desktop, Cursor | 5 min | Tool calls, responses |
+| [LangChain](/integrations/langchain) | Agent apps, RAG | 10 min | Prompts, tools, memory, chains |
+| [LiteLLM](/integrations/litellm) | Multi-provider apps | 5 min | All LLM calls |
+| [OpenAI Wrapper](/sdk/openai-wrapper) | Simple OpenAI apps | 2 min | Chat completions |
+| [Anthropic Wrapper](/sdk/anthropic-wrapper) | Simple Claude apps | 2 min | Messages API |
+| [CrewAI](/integrations/crewai) | Multi-agent crews | 10 min | Agent messages, tasks |
+| [AutoGen](/integrations/autogen) | Microsoft agents | 10 min | Conversations |
+| [LlamaIndex](/integrations/llamaindex) | RAG applications | 10 min | Queries, retrievals |
+| [DSPy](/integrations/dspy) | Optimized prompts | 10 min | Module I/O |
+| [SIEM](/integrations/siem) | Enterprise SOC | 30 min | All detections |
+| [SDK Direct](/sdk/python) | Custom integration | Varies | Full control |
 
 ---
 
@@ -48,12 +153,6 @@ Protect multi-agent systems, RAG pipelines, and autonomous AI applications.
     pip install raxe[llamaindex]
     ```
   </Card>
-  <Card title="LiteLLM" icon="bolt" href="/integrations/litellm">
-    **100+ LLM Providers** - Single integration for OpenAI, Anthropic, Azure, Bedrock, Vertex AI, and more.
-    ```bash
-    pip install raxe[litellm]
-    ```
-  </Card>
   <Card title="DSPy" icon="brain" href="/integrations/dspy">
     Stanford's declarative language model programming framework with signature-level protection.
     ```bash
@@ -81,18 +180,30 @@ Protect multi-agent systems, RAG pipelines, and autonomous AI applications.
 Drop-in replacements for native SDKs with built-in threat detection.
 
 <CardGroup cols={2}>
+  <Card title="LiteLLM" icon="bolt" href="/integrations/litellm">
+    **100+ LLM Providers** - Single integration for OpenAI, Anthropic, Azure, Bedrock, Vertex AI, and more.
+    ```bash
+    pip install raxe[litellm]
+    ```
+  </Card>
   <Card title="OpenAI" icon="sparkles" href="/sdk/openai-wrapper">
     Drop-in replacement for the OpenAI Python SDK. Same API, added security.
     ```python
     from raxe.wrappers import RaxeOpenAI
-    client = RaxeOpenAI()  # Use exactly like openai.OpenAI()
+    client = RaxeOpenAI()
     ```
   </Card>
   <Card title="Anthropic" icon="a" href="/sdk/anthropic-wrapper">
     Drop-in replacement for the Anthropic Python SDK with Claude protection.
     ```python
     from raxe.wrappers import RaxeAnthropic
-    client = RaxeAnthropic()  # Use exactly like anthropic.Anthropic()
+    client = RaxeAnthropic()
+    ```
+  </Card>
+  <Card title="HuggingFace" icon="face-smile" href="/integrations/huggingface">
+    Protect HuggingFace Transformers and Inference API calls.
+    ```bash
+    pip install raxe[huggingface]
     ```
   </Card>
 </CardGroup>
@@ -126,34 +237,16 @@ Real-time threat data streaming to your security operations center.
 
 ---
 
-## Web Frameworks
+## Web Frameworks & CI/CD
 
-Protect HTTP endpoints and API routes.
-
-<CardGroup cols={3}>
-  <Card title="FastAPI" icon="bolt" href="/integrations/common-patterns#fastapi">
-    Middleware and dependency injection patterns.
-  </Card>
-  <Card title="Flask" icon="flask" href="/integrations/common-patterns#flask">
-    Before-request hooks and decorators.
-  </Card>
-  <Card title="Django" icon="d" href="/integrations/common-patterns#django">
-    Middleware and Django REST Framework integration.
-  </Card>
-</CardGroup>
-
----
-
-## CI/CD & DevOps
-
-Shift-left security scanning in your deployment pipeline.
+Protect HTTP endpoints and shift-left security in your deployment pipeline.
 
 <CardGroup cols={2}>
-  <Card title="GitHub Actions" icon="github" href="/integrations/ci-cd#github-actions">
-    Scan prompts and test data in pull requests.
+  <Card title="FastAPI / Flask / Django" icon="globe" href="/integrations/common-patterns">
+    Middleware, decorators, and dependency injection patterns for Python web frameworks.
   </Card>
-  <Card title="Pre-commit Hooks" icon="code-branch" href="/integrations/ci-cd#pre-commit">
-    Catch threats before they're committed.
+  <Card title="GitHub Actions & Pre-commit" icon="github" href="/integrations/ci-cd">
+    Scan prompts and test data in pull requests. Catch threats before they're committed.
   </Card>
 </CardGroup>
 
@@ -198,51 +291,13 @@ Through our [LiteLLM integration](/integrations/litellm), RAXE supports **100+ L
 
 ---
 
-## Quick Comparison
-
-| Integration | Best For | Scan Points | Install |
-|-------------|----------|-------------|---------|
-| **MCP Gateway** | Claude Desktop, Cursor | Tool calls, responses | `pip install raxe[mcp]` |
-| **LangChain** | Agent apps, RAG | Prompts, tools, memory | `pip install raxe[langchain]` |
-| **LiteLLM** | Multi-provider apps | All LLM calls | `pip install raxe[litellm]` |
-| **OpenAI Wrapper** | Simple OpenAI apps | Chat completions | `pip install raxe[wrappers]` |
-| **CrewAI** | Multi-agent crews | Agent messages, tasks | `pip install raxe[crewai]` |
-| **SIEM** | Enterprise SOC | All detections | See [SIEM docs](/integrations/siem) |
-
----
-
-## Need Help Choosing?
-
-<AccordionGroup>
-  <Accordion title="I'm using Claude Desktop or Cursor">
-    Use the **MCP Gateway** - it acts as a transparent security proxy for any MCP server, scanning all tool calls and responses without modifying your existing setup.
-  </Accordion>
-  <Accordion title="I'm building a RAG application">
-    Use **LangChain** or **LlamaIndex** depending on your framework. Both provide deep integration with document retrieval and query pipelines.
-  </Accordion>
-  <Accordion title="I'm using multiple LLM providers">
-    Use **LiteLLM** - it provides a unified interface for 100+ providers with RAXE protection built in.
-  </Accordion>
-  <Accordion title="I just want to protect OpenAI calls">
-    Use the **OpenAI Wrapper** - it's a drop-in replacement with zero code changes beyond the import.
-  </Accordion>
-  <Accordion title="I need enterprise SIEM integration">
-    See our [SIEM documentation](/integrations/siem) for Splunk, CrowdStrike, Sentinel, and CEF integrations.
-  </Accordion>
-  <Accordion title="I'm building multi-agent systems">
-    Use **CrewAI** or **AutoGen** depending on your framework. Both support inter-agent message scanning.
-  </Accordion>
-</AccordionGroup>
-
----
-
 ## What's Next?
 
 <CardGroup cols={2}>
   <Card title="Quick Start" icon="rocket" href="/quickstart">
     Get protected in 60 seconds
   </Card>
-  <Card title="Detection Rules" icon="shield" href="/rules/overview">
-    Understand what RAXE detects
+  <Card title="How Detection Works" icon="shield" href="/concepts/detection-engine">
+    Understand what RAXE detects and how
   </Card>
 </CardGroup>

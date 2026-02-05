@@ -374,12 +374,12 @@ raxe mcp generate-config [OPTIONS]
 
 ### Gateway Mode
 
-```python
+```python title="gateway.py"
 from raxe.mcp import create_gateway, GatewayConfig, UpstreamConfig
 
-# Create configuration
+# Create configuration programmatically
 config = GatewayConfig(
-    l2_enabled=True,
+    l2_enabled=True,  # Enable ML detection
     upstreams=[
         UpstreamConfig(
             name="filesystem",
@@ -389,14 +389,14 @@ config = GatewayConfig(
     ]
 )
 
-# Or load from file
+# Or load from YAML file
 config = GatewayConfig.load("mcp-security.yaml")
 
 # Create and run gateway
 gateway = create_gateway(config)
 await gateway.run()
 
-# Get statistics
+# Get statistics for monitoring
 stats = gateway.get_stats()
 print(f"Requests: {stats['requests_total']}")
 print(f"Blocked: {stats['requests_blocked']}")
@@ -405,11 +405,11 @@ print(f"Threats: {stats['threats_detected']}")
 
 ### Server Mode
 
-```python
+```python title="server.py"
 from raxe.mcp import create_server
 
-# Create and run server
-server = create_server(verbose=True)
+# Create and run MCP server (exposes RAXE tools to AI assistants)
+server = create_server(verbose=True)  # Enable verbose logging
 await server.run_async()
 ```
 

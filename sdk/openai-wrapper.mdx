@@ -11,7 +11,7 @@ pip install raxe[wrappers]
 
 ## Basic Usage
 
-```python
+```python title="basic.py"
 from raxe import RaxeOpenAI
 
 # Drop-in replacement for OpenAI client
@@ -62,8 +62,8 @@ graph LR
 
 ## Error Handling
 
-```python
-from raxe import RaxeOpenAI, RaxeBlockedError
+```python title="error_handling.py"
+from raxe import RaxeOpenAI, RaxeBlockedError, RaxeError
 
 client = RaxeOpenAI(api_key="sk-...")
 
@@ -75,39 +75,44 @@ try:
     return response.choices[0].message.content
 
 except RaxeBlockedError as e:
-    # Threat was detected and blocked
+    # Threat was detected and blocked before API call
     print(f"Blocked: {e.severity}")
     print(f"Rule: {e.rule_id}")
     return "Your request was blocked for security reasons."
+
+except RaxeError as e:
+    # Other RAXE errors (config, initialization)
+    logger.error(f"RAXE error: {e}")
+    # Decide: fail open or fail closed
 ```
 
 ## Configuration
 
-```python
+```python title="config.py"
 from raxe import RaxeOpenAI
 
 client = RaxeOpenAI(
     api_key="sk-...",
 
     # RAXE configuration
-    raxe_l1_enabled=True,
-    raxe_l2_enabled=True,
-    raxe_block_on_threat=True,  # Raise error on threat
+    raxe_l1_enabled=True,        # Enable rule-based detection (514+ patterns)
+    raxe_l2_enabled=True,        # Enable ML detection (neural classifier)
+    raxe_block_on_threat=True,   # Raise RaxeBlockedError on threat detection
 )
 ```
 
 ## Streaming Support
 
-```python
+```python title="streaming.py"
 from raxe import RaxeOpenAI
 
 client = RaxeOpenAI(api_key="sk-...")
 
-# Streaming works normally
+# Streaming works normally - prompt scanned before stream starts
 stream = client.chat.completions.create(
     model="gpt-4",
     messages=[{"role": "user", "content": "Tell me a story"}],
-    stream=True
+    stream=True  # Full OpenAI streaming support
 )
 
 for chunk in stream:
@@ -119,7 +124,7 @@ for chunk in stream:
 
 The wrapper scans **all messages** in the conversation:
 
-```python
+```python title="multi_turn.py"
 response = client.chat.completions.create(
     model="gpt-4",
     messages=[
@@ -129,27 +134,29 @@ response = client.chat.completions.create(
         {"role": "user", "content": "Tell me more"}        # Scanned
     ]
 )
+# All messages combined and scanned for threats
 ```
 
 ## Migration Guide
 
-```python
-# Before
+```python title="migration.py"
+# Before - standard OpenAI client
 from openai import OpenAI
 client = OpenAI(api_key="sk-...")
 
-# After (one-line change)
+# After - one import change, full protection
 from raxe import RaxeOpenAI
 client = RaxeOpenAI(api_key="sk-...")
 
-# Everything else stays the same!
+# Everything else stays the same - full API compatibility!
 ```
 
 ## Async Support
 
-```python
+```python title="async.py"
 from raxe import AsyncRaxeOpenAI
 
+# Async client for high-throughput applications
 client = AsyncRaxeOpenAI(api_key="sk-...")
 
 response = await client.chat.completions.create(
