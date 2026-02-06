@@ -11,13 +11,13 @@ description: "Frequently asked questions"
   </Accordion>
 
   <Accordion title="Is RAXE open source?">
-    RAXE Community Edition is **community-driven** but not open source. The detection rules (514) are shared with the community, but the core engine code is proprietary. You can inspect, validate, and contribute rules, but not modify the engine itself.
+    RAXE Community Edition is **source-available** under a proprietary licence. The source code is viewable on GitHub, but it is not licensed under an OSI-approved open-source licence. See our [Licence](https://github.com/raxe-ai/raxe-ce/blob/main/LICENSE) for full terms.
   </Accordion>
 
   <Accordion title="Is it really free?">
     Yes! Community Edition is free forever with:
     - 1,000 scans/day
-    - 514 detection rules
+    - 515+ detection rules
     - L1 (rule-based) + L2 (ML) detection
     - Full CLI and SDK access
     - Local-only processing
@@ -30,7 +30,7 @@ description: "Frequently asked questions"
     |---------|---------|--------|
     | Local-first | ✅ | Often cloud-only |
     | Privacy by design | ✅ | Varies |
-    | Detection rules | 514 | Usually fewer |
+    | Detection rules | 515+ | Usually fewer |
     | ML detection | ✅ (CPU) | Often cloud |
     | Free tier | 1K/day | Limited or none |
   </Accordion>
@@ -79,7 +79,7 @@ description: "Frequently asked questions"
     Yes. RAXE is designed with privacy as a core principle:
     - All scanning is local
     - No content ever leaves your device
-    - Telemetry is anonymized and aggregated
+    - Telemetry is anonymised and aggregated
     - You can audit the telemetry payload in the code
   </Accordion>
 </AccordionGroup>
@@ -97,8 +97,8 @@ description: "Frequently asked questions"
 
   <Accordion title="What's the difference between L1 and L2 detection?">
     **L1 (Rule-Based):**
-    - Fast regex pattern matching (~1ms)
-    - 514 curated rules
+    - Fast regex pattern matching (<1ms)
+    - 515+ curated rules
     - Always available
     - Low false-positive rate
 
@@ -106,7 +106,7 @@ description: "Frequently asked questions"
     - ONNX neural network models
     - Catches novel/obfuscated attacks
     - Requires `pip install raxe[ml]`
-    - Slightly slower (~50ms)
+    - Slightly slower (~3ms)
 
     Both layers work together for comprehensive detection.
   </Accordion>
@@ -152,7 +152,7 @@ description: "Frequently asked questions"
     For other providers, use the core SDK:
     ```python
     result = raxe.scan(prompt)
-    if result.is_safe:
+    if not result.has_threats:
         response = your_llm.complete(prompt)
     ```
   </Accordion>
@@ -186,7 +186,7 @@ description: "Frequently asked questions"
 
 <AccordionGroup>
   <Accordion title="How many rules does RAXE have?">
-    Community Edition includes **514 detection rules** across 7 threat families:
+    Community Edition includes **515+ detection rules** across 7 L1 rule families (plus 4 agentic-specific and 14 L2 threat families):
     - PI (59) - Prompt Injection
     - JB (77) - Jailbreak
     - PII (112) - Personal Information
@@ -222,7 +222,7 @@ description: "Frequently asked questions"
             log_for_review(detection)
     ```
 
-    You can also create suppression rules for known false positives.
+    You can also create [suppression rules](/concepts/suppressions) for known false positives.
   </Accordion>
 
   <Accordion title="How do I contribute rules?">

@@ -54,7 +54,7 @@ raxe doctor
 You should see:
 ```
 Configuration file exists
-Rules loaded successfully (514 rules)
+Rules loaded successfully (515 rules)
 Database initialized
 ML model available
 System ready
@@ -114,7 +114,7 @@ Normal queries pass through instantly. Only attacks trigger detection.
 
 In under 5 milliseconds, RAXE:
 
-1. **L1 Rules** - Matched the input against 514+ detection patterns covering prompt injection, jailbreaks, data exfiltration, and more
+1. **L1 Rules** - Matched the input against 515+ detection patterns covering prompt injection, jailbreaks, data exfiltration, and more
 2. **Threat Classification** - Identified this as a prompt injection attack (pi-001) with HIGH severity
 3. **Action** - Logged the detection (default: log-only mode means your app keeps working)
 
@@ -129,7 +129,7 @@ In under 5 milliseconds, RAXE:
 ### LangChain Agent (2 lines)
 
 ```python title="agent.py"
-from raxe.sdk.integrations.langchain import create_callback_handler
+from raxe import create_callback_handler
 from langchain.agents import create_react_agent
 
 handler = create_callback_handler(
@@ -144,7 +144,7 @@ agent = create_react_agent(llm, tools, callbacks=[handler])
 
 ```python title="crew.py"
 from raxe import Raxe
-from raxe.sdk.integrations.crewai import RaxeCrewGuard
+from raxe import RaxeCrewGuard
 from crewai import Crew
 
 raxe = Raxe()
@@ -159,7 +159,7 @@ result = protected_crew.kickoff()
 
 ```python title="autogen_agent.py"
 from raxe import Raxe
-from raxe.sdk.integrations.autogen import create_autogen_guard
+from raxe import create_autogen_guard
 
 raxe = Raxe()
 guard = create_autogen_guard(raxe)  # Default: log-only mode
@@ -221,7 +221,7 @@ Recommendation: Block this input
 ### Python SDK
 
 ```python title="app.py"
-from raxe import Raxe, RaxeError
+from raxe import Raxe, RaxeException
 
 raxe = Raxe()
 
@@ -233,7 +233,7 @@ try:
         print(f"Detections: {result.total_detections}")
     else:
         print("Safe")
-except RaxeError as e:
+except RaxeException as e:
     # Handle RAXE errors gracefully
     print(f"Scan error: {e}")
     # Decide: fail open (allow) or fail closed (block)
@@ -309,6 +309,8 @@ You now have threat detection running. Here's the path to full protection:
 
 ---
 
+<Info>CE includes 1,000 scans/day. For higher volumes, see [pricing](/enterprise-contact).</Info>
+
 ## What's Next?
 
 <CardGroup cols={2}>
@@ -322,6 +324,6 @@ You now have threat detection running. Here's the path to full protection:
     Multi-agent crew protection
   </Card>
   <Card title="Detection Rules" icon="shield" href="/rules/overview">
-    Explore 514+ detection rules
+    Explore 515+ detection rules
   </Card>
 </CardGroup>

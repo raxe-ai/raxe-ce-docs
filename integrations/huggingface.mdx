@@ -3,6 +3,8 @@ title: "Hugging Face Integration"
 description: "Protect Hugging Face pipelines with RAXE"
 ---
 
+<Info>New to RAXE? Start with the [Quickstart](/quickstart) and learn [how detection works](/concepts/detection-engine).</Info>
+
 ## Overview
 
 RAXE integrates with Hugging Face Transformers to provide automatic security scanning for local model pipelines.
@@ -18,7 +20,7 @@ pip install raxe transformers torch
 Use the RAXE pipeline wrapper for automatic scanning:
 
 ```python
-from raxe.sdk.integrations import RaxePipeline
+from raxe import RaxePipeline
 
 # Wrap any Hugging Face pipeline
 pipe = RaxePipeline(
@@ -45,7 +47,7 @@ result = pipe("Once upon a time")
 
 ```python
 from raxe import Raxe
-from raxe.sdk.integrations import RaxePipeline
+from raxe import RaxePipeline
 
 pipe = RaxePipeline(
     task="text-generation",
@@ -67,8 +69,8 @@ pipe = RaxePipeline(
 Enable blocking to prevent malicious inputs:
 
 ```python
-from raxe.sdk.integrations import RaxePipeline
-from raxe.sdk.exceptions import SecurityException
+from raxe import RaxePipeline
+from raxe import RaxeBlockedError
 
 pipe = RaxePipeline(
     task="text-generation",
@@ -79,7 +81,7 @@ pipe = RaxePipeline(
 
 try:
     result = pipe(user_input)
-except SecurityException as e:
+except RaxeBlockedError as e:
     print(f"Blocked: {e.message}")
 ```
 
@@ -128,7 +130,7 @@ print(result[0]["summary_text"])
 ## Factory Function
 
 ```python
-from raxe.sdk.integrations import create_huggingface_pipeline
+from raxe import create_huggingface_pipeline
 
 # Quick setup with blocking
 pipe = create_huggingface_pipeline(
@@ -169,7 +171,18 @@ pipe = RaxePipeline(
   <Card title="LiteLLM" icon="cloud" href="/integrations/litellm">
     200+ cloud providers through LiteLLM
   </Card>
-  <Card title="OpenAI" icon="robot" href="/wrappers/openai">
+  <Card title="OpenAI" icon="robot" href="/sdk/openai-wrapper">
     Drop-in OpenAI wrapper
+  </Card>
+</CardGroup>
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="OpenAI Wrapper" icon="plug" href="/sdk/openai-wrapper">
+    Use RAXE with the OpenAI-compatible API
+  </Card>
+  <Card title="Production Checklist" icon="list-check" href="/guides/production-checklist">
+    Deploy RAXE safely to production
   </Card>
 </CardGroup>

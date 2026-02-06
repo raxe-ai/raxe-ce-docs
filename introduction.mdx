@@ -3,7 +3,7 @@ title: "RAXE Community Edition"
 description: "On-device AI security for agents and LLMs"
 ---
 
-**Stop prompt injection, jailbreaks, and agent hijacking in real-time.** RAXE scans every prompt and response locally — no cloud, no data leaks, sub-10ms latency.
+**Stop prompt injection, jailbreaks, and agent hijacking in real-time.** RAXE scans every prompt and response locally — no cloud, no data leaks, sub-5ms latency.
 
 ```python title="app.py"
 from raxe import Raxe
@@ -63,7 +63,7 @@ RAXE covers the [OWASP Top 10 for Agentic Applications](https://genai.owasp.org/
     LangChain, CrewAI, AutoGen, LlamaIndex, DSPy, Portkey
 
     ```python title="agent.py"
-    from raxe.sdk.integrations.langchain import create_callback_handler
+    from raxe import create_callback_handler
 
     handler = create_callback_handler()  # 2 lines to protect any chain
     ```
@@ -95,7 +95,7 @@ RAXE covers the [OWASP Top 10 for Agentic Applications](https://genai.owasp.org/
 <Accordion title="How Detection Works">
   RAXE uses a dual-layer architecture:
 
-  **L1 (Rules):** 514+ regex patterns across 11 threat families. Sub-millisecond latency. Catches known attack signatures.
+  **L1 (Rules):** 515+ regex patterns across 11 threat families. Sub-millisecond latency. Catches known attack signatures.
 
   **L2 (ML):** 5-head neural classifier running 100% on-device via ONNX. Catches obfuscated attacks, novel patterns, and semantic threats that bypass regex.
 
@@ -115,18 +115,20 @@ RAXE covers the [OWASP Top 10 for Agentic Applications](https://genai.owasp.org/
 
 <CardGroup cols={4}>
   <Card title="L1 Latency" icon="gauge-high">
-    **~1ms**
+    **<1ms**
   </Card>
   <Card title="Full Scan" icon="gauge">
-    **~10ms**
+    **<5ms**
   </Card>
   <Card title="Rules" icon="shield">
-    **514+**
+    **515+**
   </Card>
   <Card title="Threat Families" icon="folder">
     **11**
   </Card>
 </CardGroup>
+
+<Tip>RAXE Community Edition includes 1,000 scans/day free — plenty for development and small deployments. Need more? [Contact us](/enterprise-contact) for Pro and Enterprise options.</Tip>
 
 ## Next Steps
 

@@ -3,6 +3,8 @@ title: "CrewAI Integration"
 description: "Think-time security for CrewAI multi-agent crews"
 ---
 
+<Info>New to RAXE? Start with the [Quickstart](/quickstart) and learn [how detection works](/concepts/detection-engine).</Info>
+
 ## Overview
 
 RAXE provides **think-time security** for CrewAI multi-agent crews — real-time threat detection during agent inference, before task execution. Protect agent-to-agent communications, task handoffs, and tool invocations.
@@ -24,7 +26,7 @@ pip install raxe[crewai]
 ```python title="quick_start.py"
 from crewai import Crew, Agent, Task
 from raxe import Raxe
-from raxe.sdk.integrations.crewai import RaxeCrewGuard
+from raxe import RaxeCrewGuard
 
 # Create guard (default: log-only mode - safe for production)
 guard = RaxeCrewGuard(Raxe())
@@ -41,7 +43,7 @@ Alternatively, use callbacks directly in your crew:
 ```python title="callbacks.py"
 from crewai import Crew, Agent, Task
 from raxe import Raxe
-from raxe.sdk.integrations.crewai import RaxeCrewGuard
+from raxe import RaxeCrewGuard
 
 guard = RaxeCrewGuard(Raxe())
 
@@ -84,7 +86,7 @@ result = crew.kickoff()
 
 ```python title="config.py"
 from raxe import Raxe
-from raxe.sdk.integrations.crewai import RaxeCrewGuard, CrewGuardConfig, ScanMode
+from raxe import RaxeCrewGuard, CrewGuardConfig, ScanMode
 
 # Blocking mode for high-severity threats
 config = CrewGuardConfig(
@@ -116,7 +118,7 @@ Automatically scan tool inputs and outputs:
 ```python title="tool_scanning.py"
 from crewai.tools import BaseTool
 from raxe import Raxe
-from raxe.sdk.integrations.crewai import RaxeCrewGuard, CrewGuardConfig, ScanMode
+from raxe import RaxeCrewGuard, CrewGuardConfig, ScanMode
 
 config = CrewGuardConfig(
     mode=ScanMode.BLOCK_ON_HIGH,
@@ -139,7 +141,7 @@ wrapped_tools = guard.wrap_tools([tool1, tool2, tool3])
 Handle detected threats with custom callbacks:
 
 ```python title="threat_callbacks.py"
-from raxe.sdk.integrations.crewai import CrewGuardConfig, ScanMode
+from raxe import CrewGuardConfig, ScanMode
 
 def on_threat_detected(message: str, result):
     """Called when any threat is detected."""
@@ -161,7 +163,7 @@ config = CrewGuardConfig(
 ## Error Handling
 
 ```python title="error_handling.py"
-from raxe import RaxeBlockedError, RaxeError
+from raxe import RaxeBlockedError, RaxeException
 
 try:
     result = protected_crew.kickoff()
@@ -170,7 +172,7 @@ except RaxeBlockedError as e:
     print(f"Crew blocked: {e.severity}")
     print(f"Rule: {e.rule_id}")
     # Handle blocked execution - return safe response
-except RaxeError as e:
+except RaxeException as e:
     # Other RAXE errors (config, initialization)
     logger.error(f"RAXE error: {e}")
     # Decide: fail open or fail closed
@@ -179,7 +181,7 @@ except RaxeError as e:
 ## Advanced Options
 
 ```python title="advanced.py"
-from raxe.sdk.integrations.crewai import CrewGuardConfig, ScanMode
+from raxe import CrewGuardConfig, ScanMode
 
 config = CrewGuardConfig(
     # What to scan (all default to True)
@@ -209,7 +211,7 @@ config = CrewGuardConfig(
     Monitor threats before enabling blocking:
     ```python title="log_only.py"
     from raxe import Raxe
-    from raxe.sdk.integrations.crewai import RaxeCrewGuard
+    from raxe import RaxeCrewGuard
 
     # Default: log-only mode (safe for production)
     guard = RaxeCrewGuard(Raxe())
@@ -219,7 +221,7 @@ config = CrewGuardConfig(
     Enable tool wrapping for full protection:
     ```python title="wrap_tools.py"
     from raxe import Raxe
-    from raxe.sdk.integrations.crewai import RaxeCrewGuard, CrewGuardConfig
+    from raxe import RaxeCrewGuard, CrewGuardConfig
 
     config = CrewGuardConfig(wrap_tools=True)  # Auto-wrap all tools
     guard = RaxeCrewGuard(Raxe(), config=config)
@@ -228,7 +230,7 @@ config = CrewGuardConfig(
   <Accordion title="Use appropriate blocking threshold">
     Choose blocking threshold based on risk tolerance:
     ```python title="thresholds.py"
-    from raxe.sdk.integrations.crewai import CrewGuardConfig, ScanMode
+    from raxe import CrewGuardConfig, ScanMode
 
     # Strict: Block any threat (for high-security environments)
     config = CrewGuardConfig(mode=ScanMode.BLOCK_ON_THREAT)

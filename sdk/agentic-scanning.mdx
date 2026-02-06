@@ -5,7 +5,7 @@ description: "Specialized scanning methods for securing autonomous AI agents"
 
 ## Overview
 
-RAXE provides specialized scanning methods for **autonomous AI agent** workflows. These methods detect agentic-specific threats like goal hijacking, memory poisoning, and dangerous tool chains.
+RAXE provides specialised scanning methods for **autonomous AI agent** workflows. These methods detect agentic-specific threats like goal hijacking, memory poisoning, and dangerous tool chains.
 
 ## Why Agentic Security?
 
@@ -21,8 +21,7 @@ AI agents aren't just LLMs — they're autonomous systems that:
 ## AgentScanner Setup
 
 ```python
-from raxe.sdk.client import Raxe
-from raxe.sdk.agent_scanner import create_agent_scanner, AgentScannerConfig
+from raxe import Raxe, create_agent_scanner, AgentScannerConfig
 
 raxe = Raxe()
 config = AgentScannerConfig(
@@ -207,7 +206,7 @@ RAXE supports 12 scan types for comprehensive agent protection:
 
 ## Rule Families
 
-RAXE includes 4 specialized rule families for agentic attacks:
+RAXE includes 4 specialised rule families for agentic attacks:
 
 | Family | Rules | Threats |
 |--------|-------|---------|
@@ -221,7 +220,7 @@ RAXE includes 4 specialized rule families for agentic attacks:
 ### LangChain
 
 ```python
-from raxe.sdk.integrations.langchain import create_callback_handler
+from raxe import create_callback_handler
 
 handler = create_callback_handler()
 
@@ -237,7 +236,7 @@ handler.scan_memory_before_save(key, content)
 For custom frameworks:
 
 ```python
-from raxe.sdk.agent_scanner import create_agent_scanner, AgentScannerConfig
+from raxe import create_agent_scanner, AgentScannerConfig
 
 scanner = create_agent_scanner(
     Raxe(),
@@ -302,3 +301,14 @@ All agentic scanning runs 100% locally:
 - No prompts transmitted
 - No memory content sent
 - Only anonymized detection metadata (if telemetry enabled)
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="LangChain Integration" icon="link" href="/integrations/langchain">
+    Use agentic scanning with LangChain
+  </Card>
+  <Card title="Custom Rules" icon="pencil" href="/rules/custom-rules">
+    Create custom detection rules
+  </Card>
+</CardGroup>

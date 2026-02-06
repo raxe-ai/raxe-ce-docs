@@ -32,7 +32,7 @@ RAXE-{CATEGORY}-{NUMBER}
 
 ```python
 from raxe import Raxe
-from raxe.exceptions import AuthenticationError
+from raxe import AuthenticationError
 
 try:
     raxe = Raxe(api_key="invalid")
@@ -56,7 +56,7 @@ except AuthenticationError as e:
 
 ```python
 from raxe import Raxe
-from raxe.exceptions import ValidationError
+from raxe import ValidationError
 
 raxe = Raxe()
 

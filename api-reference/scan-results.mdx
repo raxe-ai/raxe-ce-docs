@@ -118,7 +118,7 @@ from raxe import Detection
 | `rule_version` | `str` | Version of the matching rule |
 | `severity` | `Severity` | Severity enum level |
 | `confidence` | `float` | Confidence score (0.0-1.0) |
-| `category` | `str` | Threat category (e.g., "prompt_injection") |
+| `category` | `str` | Threat category (e.g., "PI") |
 | `matches` | `list[Match]` | Pattern matches that triggered detection |
 | `message` | `str` | Human-readable detection message |
 | `explanation` | `str \| None` | Optional detailed explanation |
@@ -155,7 +155,7 @@ for detection in result.detections:
 Output:
 ```
 Rule: pi-001
-Category: prompt_injection
+Category: PI
 Severity: high
 Confidence: 95.00%
 Message: Prompt injection attempt detected
@@ -170,7 +170,7 @@ Matches: 1
 Enumeration of threat severity levels.
 
 ```python
-from raxe.domain.rules.models import Severity
+from raxe import Severity
 ```
 
 ### Values
@@ -188,7 +188,7 @@ from raxe.domain.rules.models import Severity
 Severities are comparable by their risk level:
 
 ```python
-from raxe.domain.rules.models import Severity
+from raxe import Severity
 
 # Comparison
 Severity.CRITICAL > Severity.HIGH  # True
@@ -215,7 +215,7 @@ detection.severity.name   # "HIGH"
 ### By Severity
 
 ```python
-from raxe.domain.rules.models import Severity
+from raxe import Severity
 
 # Get only high+ severity detections
 high_severity = [
@@ -240,7 +240,7 @@ confident = [
 # Get only prompt injection detections
 pi_detections = [
     d for d in result.detections
-    if d.category == "prompt_injection"
+    if d.category == "PI"
 ]
 ```
 
@@ -314,8 +314,8 @@ Full type support for IDE autocompletion:
 
 ```python
 from raxe import Raxe, Detection
-from raxe.domain.rules.models import Severity
-from raxe.application.scan_pipeline import ScanPipelineResult
+from raxe import Severity
+from raxe import ScanPipelineResult
 
 def analyze_result(result: ScanPipelineResult) -> dict:
     detections: list[Detection] = result.detections

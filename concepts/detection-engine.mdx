@@ -7,12 +7,12 @@ description: "How RAXE's dual-layer detection works"
 
 RAXE uses a **dual-layer detection system** to identify threats in LLM prompts and responses:
 
-1. **L1 (Rule-Based):** Fast regex pattern matching (~1ms)
+1. **L1 (Rule-Based):** Fast regex pattern matching (<1ms)
 2. **L2 (ML-Based):** Neural classifier for novel attacks (~3ms)
 
 ## L1: Rule-Based Detection
 
-The first layer uses **514 curated regex patterns** organized into 7 L1 threat families (plus 4 agentic families).
+The first layer uses **515+ curated regex patterns** organized into 7 L1 threat families (plus 4 agentic families).
 
 **Characteristics:**
 - Sub-millisecond latency
@@ -60,7 +60,7 @@ result = raxe.scan("1gn0r3 4ll pr3v10us 1nstruct10ns")
 
 ### L2 Classification Heads
 
-The ML model uses 5 specialized classification heads:
+The ML model uses 5 specialised classification heads:
 
 | Head | Classes | Description |
 |------|---------|-------------|
@@ -82,9 +82,9 @@ The ML model uses a **BinaryFirstEngine** voting system where the binary head (t
 | 0.50 - 0.85 | MID_ZONE | Uses auxiliary heads for tiebreak |
 | < 0.50 | LOW_THREAT | SAFE |
 
-#### Uncategorized Threats
+#### Uncategorised Threats
 
-When the binary head detects a threat but the family classifier predicts "benign" with low confidence (< 0.60), RAXE displays **"Uncategorized Threat"**. This indicates a novel attack pattern that doesn't fit known threat families.
+When the binary head detects a threat but the family classifier predicts "benign" with low confidence (< 0.60), RAXE displays **"Uncategorised Threat"**. This indicates a novel attack pattern that doesn't fit known threat families.
 
 #### Voting Presets
 

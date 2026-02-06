@@ -29,14 +29,13 @@ RAXE provides a comprehensive Python SDK with the following components:
 from raxe import Raxe, AsyncRaxe
 
 # LLM wrappers
-from raxe.sdk.wrappers import RaxeOpenAI, RaxeAnthropic
+from raxe import RaxeOpenAI, RaxeAnthropic
 
 # Types and models
-from raxe.domain.rules.models import Detection, Severity
-from raxe.application.scan_result import ScanResult
+from raxe import Detection, Severity, ScanResult
 
 # Exceptions
-from raxe.exceptions import (
+from raxe import (
     RaxeException,
     RaxeBlockedError,
     ValidationError,
@@ -45,7 +44,7 @@ from raxe.exceptions import (
 )
 
 # LangChain integration
-from raxe.sdk.integrations.langchain import RaxeCallbackHandler
+from raxe import RaxeCallbackHandler
 ```
 
 ## Basic Usage Pattern
@@ -60,12 +59,12 @@ raxe = Raxe()
 result = raxe.scan("user input here")
 
 # Check result
-if result.is_safe:
+if not result.has_threats:
     # Proceed with LLM call
     pass
 else:
     # Handle threat
-    print(f"Threat: {result.highest_severity}")
+    print(f"Threat: {result.severity}")
     for detection in result.detections:
         print(f"  - {detection.rule_id}: {detection.severity}")
 ```
@@ -76,14 +75,13 @@ RAXE is fully typed for IDE support:
 
 ```python
 from raxe import Raxe
-from raxe.application.scan_result import ScanResult
-from raxe.domain.rules.models import Detection
+from raxe import ScanResult, Detection
 
 def process_input(user_input: str) -> bool:
     raxe: Raxe = Raxe()
     result: ScanResult = raxe.scan(user_input)
     detections: list[Detection] = result.detections
-    return result.is_safe
+    return not result.has_threats
 ```
 
 ## API Stability

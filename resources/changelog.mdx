@@ -94,7 +94,7 @@ Reduced false positive rate with targeted rule refinements.
 
 ### Telemetry Improvements
 
-Added token count tracking to L2 telemetry for better monitoring of tokenization behavior.
+Added token count tracking to L2 telemetry for better monitoring of tokenization behaviour.
 
 **New Telemetry Fields:**
 - `token_count`: Number of tokens after tokenization (max 512)
@@ -173,25 +173,25 @@ First-class support for the most popular agentic AI frameworks.
 
 ```python
 # LangChain
-from raxe.sdk.integrations import RaxeCallbackHandler
+from raxe import RaxeCallbackHandler
 llm = ChatOpenAI(callbacks=[RaxeCallbackHandler()])
 
 # CrewAI
-from raxe.sdk.integrations import RaxeCrewGuard
+from raxe import RaxeCrewGuard
 guard = RaxeCrewGuard()
 crew = Crew(step_callback=guard.step_callback)
 
 # AutoGen
-from raxe.sdk.integrations import RaxeConversationGuard
+from raxe import RaxeConversationGuard
 guard = RaxeConversationGuard()
 guard.register(assistant)
 
 # LlamaIndex
-from raxe.sdk.integrations import RaxeLlamaIndexCallback
+from raxe import RaxeLlamaIndexCallback
 Settings.callback_manager = CallbackManager([RaxeLlamaIndexCallback()])
 
 # Portkey
-from raxe.sdk.integrations import RaxePortkeyWebhook
+from raxe import RaxePortkeyWebhook
 webhook = RaxePortkeyWebhook()
 ```
 
@@ -271,7 +271,7 @@ This release introduces a comprehensive suppression system for managing false po
 Production-ready, privacy-first threat detection for LLM applications.
 
 <CardGroup cols={2}>
-  <Card title="514 Detection Rules" icon="shield-halved">
+  <Card title="515+ Detection Rules" icon="shield-halved">
     Curated rules across 7 threat families
   </Card>
   <Card title="Dual-Layer Detection" icon="layer-group">
@@ -332,20 +332,16 @@ Production-ready, privacy-first threat detection for LLM applications.
 
 ## Roadmap
 
-### v0.3 (Coming Soon)
-- Response scanning
-- Chain-of-thought analysis
-- Expanded PII detection
+We're working towards RAXE v1.0. Follow our progress and share feedback:
 
-### v1.0
-- Enterprise features
-- Custom model fine-tuning
-- Multi-language SDKs
-
-### v2.0
-- Auto-generated rules
-- Adversarial testing
-- Model drift detection
+<CardGroup cols={2}>
+  <Card title="GitHub Discussions" icon="comments" href="https://github.com/raxe-ai/raxe-ce/discussions">
+    Feature requests and roadmap updates
+  </Card>
+  <Card title="Slack Community" icon="slack" href="https://join.slack.com/t/raxeai/shared_invite/zt-3kch8c9zp-A8CMJYWQjBBpzV4KNnAQcQ">
+    Join the conversation
+  </Card>
+</CardGroup>
 
 ---
 

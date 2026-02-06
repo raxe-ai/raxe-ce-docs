@@ -121,14 +121,14 @@ except RaxeBlockedError as e:
 ## Custom Threat Handling
 
 ```python title="custom_handling.py"
-from raxe import Raxe, RaxeError
+from raxe import Raxe, RaxeException
 
 raxe = Raxe()
 
 def process_with_custom_logic(user_input: str) -> str:
     try:
         result = raxe.scan(user_input)
-    except RaxeError as e:
+    except RaxeException as e:
         # Handle scan errors - decide fail open or fail closed
         logger.error(f"RAXE scan error: {e}")
         return generate_normally(user_input)  # Fail open example
@@ -170,7 +170,7 @@ with Raxe() as raxe:
 ## Error Handling
 
 ```python title="error_handling.py"
-from raxe import Raxe, RaxeBlockedError, RaxeError
+from raxe import Raxe, RaxeBlockedError, RaxeException
 
 raxe = Raxe()
 
@@ -181,7 +181,7 @@ except RaxeBlockedError as e:
     print(f"Blocked: {e.result.severity}")
     print(f"Detections: {e.result.total_detections}")
     print(f"Rule: {e.rule_id}")
-except RaxeError as e:
+except RaxeException as e:
     # Other RAXE errors (config, initialization, etc.)
     print(f"Error: {e}")
     # Decide: fail open (allow) or fail closed (block)
@@ -190,7 +190,7 @@ except RaxeError as e:
 ## Filtering Detections
 
 ```python title="filtering.py"
-from raxe.domain.rules.models import Severity
+from raxe import Severity
 
 result = raxe.scan(user_input)
 
@@ -259,3 +259,14 @@ def scan_prompt(prompt: str):
 with ThreadPoolExecutor(max_workers=10) as executor:
     results = list(executor.map(scan_prompt, prompts))
 ```
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Async SDK" icon="bolt" href="/sdk/async">
+    High-throughput scanning with async support
+  </Card>
+  <Card title="Agentic Scanning" icon="robot" href="/sdk/agentic-scanning">
+    Specialised scanning for AI agent workflows
+  </Card>
+</CardGroup>

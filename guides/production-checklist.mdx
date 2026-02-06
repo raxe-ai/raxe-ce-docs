@@ -5,7 +5,7 @@ description: "Deploy RAXE safely to production with this comprehensive checklist
 
 ## Overview
 
-Moving from development to production requires careful planning. This guide walks you through a safe, gradual rollout that minimizes risk while maximizing protection.
+Moving from development to production requires careful planning. This guide walks you through a safe, gradual rollout that minimises risk while maximising protection.
 
 <Info>
 RAXE defaults to **log-only mode** for a reason. Take time to understand your traffic patterns before enabling blocking.
@@ -122,7 +122,7 @@ Before deploying to production, verify each item:
 
 ## Shadow Mode Pattern
 
-Shadow mode lets you observe RAXE's behavior without changing your application's functionality.
+Shadow mode lets you observe RAXE's behaviour without changing your application's functionality.
 
 ### Basic Shadow Mode
 
@@ -387,7 +387,7 @@ After successful gradual rollout:
 
 ```python
 from raxe import Raxe
-from raxe.sdk.integrations import create_langchain_handler
+from raxe import create_langchain_handler
 
 raxe = Raxe()
 
@@ -459,7 +459,7 @@ If RAXE has an error, allow the request:
 
 ```python
 from raxe import Raxe
-from raxe.sdk.exceptions import RaxeException
+from raxe import RaxeException
 
 raxe = Raxe()
 

@@ -5,7 +5,7 @@ description: "Add RAXE to existing LLM applications without breaking production"
 
 ## Zero-Risk Migration Philosophy
 
-Adding security to production systems is nerve-wracking. One wrong move and your users get errors instead of responses.
+Adding security to production systems is nerve-racking. One wrong move and your users get errors instead of responses.
 
 RAXE is designed for incremental adoption:
 
@@ -196,7 +196,7 @@ result = chain.run(question=user_input)
 from langchain_openai import ChatOpenAI
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
-from raxe.sdk.integrations import create_langchain_handler
+from raxe import create_langchain_handler
 
 handler = create_langchain_handler()  # Default: log-only
 
@@ -222,7 +222,7 @@ response = litellm.completion(
 ```python
 # AFTER: Add RAXE callback
 import litellm
-from raxe.sdk.integrations import create_litellm_handler
+from raxe import create_litellm_handler
 
 callback = create_litellm_handler()  # Default: log-only
 litellm.callbacks = [callback]
@@ -251,7 +251,7 @@ result = crew.kickoff()
 # AFTER: Wrap with RAXE guard
 from crewai import Crew, Agent, Task
 from raxe import Raxe
-from raxe.sdk.integrations import create_crewai_guard
+from raxe import create_crewai_guard
 
 raxe = Raxe()
 guard = create_crewai_guard(raxe)

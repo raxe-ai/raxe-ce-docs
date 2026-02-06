@@ -221,9 +221,9 @@ In server mode, RAXE exposes security tools that AI assistants can call directly
     ```
     ✓ SAFE: No threats detected
 
-    Scan completed in 5.2ms
-      L1 (rules): 2.1ms
-      L2 (ML):    3.1ms
+    Scan completed in 3.5ms
+      L1 (rules): 0.4ms
+      L2 (ML):    2.9ms
     ```
 
     **Output (threat detected):**
@@ -238,7 +238,7 @@ In server mode, RAXE exposes security tools that AI assistants can call directly
 
     ━━━ Summary ━━━
       Total threats: 2 L1 + 0 L2
-      Scan time: 8.5ms
+      Scan time: 3.8ms
     ```
   </Accordion>
 
@@ -375,7 +375,7 @@ raxe mcp generate-config [OPTIONS]
 ### Gateway Mode
 
 ```python title="gateway.py"
-from raxe.mcp import create_gateway, GatewayConfig, UpstreamConfig
+from raxe import create_gateway, GatewayConfig, UpstreamConfig
 
 # Create configuration programmatically
 config = GatewayConfig(
@@ -406,7 +406,7 @@ print(f"Threats: {stats['threats_detected']}")
 ### Server Mode
 
 ```python title="server.py"
-from raxe.mcp import create_server
+from raxe import create_server
 
 # Create and run MCP server (exposes RAXE tools to AI assistants)
 server = create_server(verbose=True)  # Enable verbose logging
@@ -486,7 +486,7 @@ await server.run_async()
     raxe mcp gateway --no-l2 -u "..."
     ```
 
-    L1 rule-based detection alone provides sub-5ms scanning.
+    L1 rule-based detection alone provides sub-millisecond scanning.
   </Accordion>
 </AccordionGroup>
 
@@ -571,9 +571,9 @@ raxe mcp gateway -u "npx @modelcontextprotocol/server-filesystem /tmp" -v
 
 | Metric | Target |
 |--------|--------|
-| Startup time | ~5s (loading 514 rules) |
-| L1 scan latency | <5ms |
-| L1+L2 scan latency | <15ms |
+| Startup time | ~5s (loading 515+ rules) |
+| L1 scan latency | <1ms |
+| L1+L2 scan latency | <5ms |
 | Gateway overhead | <2ms per request |
 
 <Tip>

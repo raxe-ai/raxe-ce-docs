@@ -3,6 +3,8 @@ title: "LlamaIndex Integration"
 description: "Protect LlamaIndex RAG pipelines and agents with RAXE"
 ---
 
+<Info>New to RAXE? Start with the [Quickstart](/quickstart) and learn [how detection works](/concepts/detection-engine).</Info>
+
 ## Overview
 
 RAXE integrates with LlamaIndex to automatically scan queries, prompts, and responses in your RAG pipelines and agents.
@@ -19,7 +21,7 @@ pip install raxe[llamaindex]
 from llama_index.core import VectorStoreIndex, Settings
 from llama_index.core.callbacks import CallbackManager
 from raxe import Raxe
-from raxe.sdk.integrations import RaxeLlamaIndexCallback
+from raxe import RaxeLlamaIndexCallback
 
 # Initialize RAXE
 raxe = Raxe()
@@ -58,7 +60,7 @@ callback = RaxeLlamaIndexCallback(
 Optimized for RAG pipelines:
 
 ```python
-from raxe.sdk.integrations import RaxeQueryEngineCallback
+from raxe import RaxeQueryEngineCallback
 
 callback = RaxeQueryEngineCallback(
     raxe_client=raxe,
@@ -71,7 +73,7 @@ callback = RaxeQueryEngineCallback(
 Optimized for LlamaIndex agents:
 
 ```python
-from raxe.sdk.integrations import RaxeAgentCallback
+from raxe import RaxeAgentCallback
 
 callback = RaxeAgentCallback(
     raxe_client=raxe,
@@ -86,7 +88,7 @@ callback = RaxeAgentCallback(
 from llama_index.core.agent import ReActAgent
 from llama_index.core.tools import FunctionTool
 from llama_index.core.callbacks import CallbackManager
-from raxe.sdk.integrations import RaxeAgentCallback
+from raxe import RaxeAgentCallback
 
 # Create agent callback with blocking
 raxe_callback = RaxeAgentCallback(block_on_threats=True)
@@ -115,7 +117,7 @@ For more granular control, use the instrumentation handler:
 
 ```python
 from llama_index.core.instrumentation import get_dispatcher
-from raxe.sdk.integrations import RaxeSpanHandler
+from raxe import RaxeSpanHandler
 
 # Create span handler
 span_handler = RaxeSpanHandler(
@@ -134,11 +136,11 @@ root_dispatcher.add_span_handler(span_handler)
 ## Error Handling
 
 ```python
-from raxe.sdk.exceptions import SecurityException
+from raxe import RaxeBlockedError
 
 try:
     response = query_engine.query("Potentially malicious query")
-except SecurityException as e:
+except RaxeBlockedError as e:
     print("Query blocked for security reasons")
 ```
 
@@ -152,7 +154,7 @@ except SecurityException as e:
     callback = RaxeLlamaIndexCallback(raxe_client=raxe)
     ```
   </Accordion>
-  <Accordion title="Use specialized callbacks">
+  <Accordion title="Use specialised callbacks">
     Choose the right callback for your use case:
     ```python
     # For RAG pipelines
@@ -163,13 +165,13 @@ except SecurityException as e:
     ```
   </Accordion>
   <Accordion title="Handle blocking gracefully">
-    Always catch `SecurityException`:
+    Always catch `RaxeBlockedError`:
     ```python
-    from raxe.sdk.exceptions import SecurityException
+    from raxe import RaxeBlockedError
 
     try:
         response = query_engine.query(user_input)
-    except SecurityException:
+    except RaxeBlockedError:
         return "I can't process that request."
     ```
   </Accordion>
@@ -182,3 +184,14 @@ except SecurityException as e:
 | 0.10.0 - 0.10.19 | Supported | Not available |
 | 0.10.20+ | Supported | Supported |
 | 0.11.x | Supported | Recommended |
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Production Checklist" icon="list-check" href="/guides/production-checklist">
+    Deploy RAXE safely to production
+  </Card>
+  <Card title="Custom Rules" icon="pencil" href="/rules/custom-rules">
+    Create detection rules for your specific use case
+  </Card>
+</CardGroup>

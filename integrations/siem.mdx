@@ -81,8 +81,7 @@ raxe customer siem configure cust_acme --mssp mssp_partner \
   </Tab>
   <Tab title="Python SDK">
 ```python
-from raxe.domain.siem.config import SIEMConfig, SIEMType
-from raxe.infrastructure.siem import create_siem_adapter
+from raxe import SIEMConfig, SIEMType, create_siem_adapter
 
 adapter = create_siem_adapter(SIEMConfig(
     siem_type=SIEMType.SPLUNK,
@@ -375,7 +374,7 @@ CEF:0|RAXE|ThreatDetection|0.10.0|pi-001|Prompt Injection Detected|10|rt=1706619
 | `cs5` | mssp_id | MSSP identifier |
 | `cs6` | customer_id | Customer identifier |
 | `cn1` | prompt_length | Prompt character count |
-| `cn2` | detection_count | Number of detections |
+| `cn2` | total_detections | Number of detections |
 | `cn3` | scan_duration_ms | Scan latency |
 
 ### CEF Severity Mapping
@@ -404,7 +403,7 @@ CEF:0|RAXE|ThreatDetection|0.10.0|pi-001|Prompt Injection Detected|10|rt=1706619
 The SIEM dispatcher routes events to the correct SIEM based on customer:
 
 ```python
-from raxe.infrastructure.siem import SIEMDispatcher, create_siem_adapter
+from raxe import SIEMDispatcher, create_siem_adapter
 
 dispatcher = SIEMDispatcher()
 
@@ -555,7 +554,7 @@ Always use TLS (port 6514) for syslog in production. UDP syslog is unencrypted a
 <Accordion title="Monitor Delivery">
 Use audit logging to track SIEM delivery success rates:
 ```python
-from raxe.infrastructure.audit.mssp_audit_logger import get_mssp_audit_logger
+from raxe import get_mssp_audit_logger
 stats = get_mssp_audit_logger().get_stats()
 print(f"Success rate: {stats['successful'] / stats['total_deliveries']:.1%}")
 ```

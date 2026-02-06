@@ -87,7 +87,7 @@ def scan(
 | `policy_id` | `str \| None` | `None` | Override policy for this scan only |
 | `customer_id` | `str \| None` | `None` | Customer identifier for tracking |
 | `context` | `dict \| None` | `None` | Additional context metadata |
-| `block_on_threat` | `bool` | `False` | Raise SecurityException on threat |
+| `block_on_threat` | `bool` | `False` | Raise RaxeBlockedError on threat |
 | `mode` | `str` | `"balanced"` | Performance mode: "fast", "balanced", "thorough" |
 | `l1_enabled` | `bool` | `True` | Enable L1 rule detection |
 | `l2_enabled` | `bool` | `True` | Enable L2 ML detection |
@@ -101,13 +101,13 @@ def scan(
 
 **Raises:**
 - `ValidationError`: If text is empty or invalid
-- `SecurityException`: If `block_on_threat=True` and threat detected
+- `RaxeBlockedError`: If `block_on_threat=True` and threat detected
 
 **Example:**
 
 ```python
 from raxe import Raxe
-from raxe.sdk.exceptions import SecurityException
+from raxe import RaxeBlockedError
 
 raxe = Raxe()
 
@@ -132,7 +132,7 @@ try:
         "malicious prompt",
         block_on_threat=True
     )
-except SecurityException as e:
+except RaxeBlockedError as e:
     print(f"Blocked: {e.result.severity}")
 
 # Multi-tenant scanning
@@ -158,7 +158,7 @@ result = raxe.scan(
 
 ### scan_fast()
 
-Fast scan using L1 rules only (< 3ms).
+Fast scan using L1 rules only (< 1ms).
 
 ```python
 def scan_fast(
@@ -174,7 +174,7 @@ Equivalent to `scan(text, l2_enabled=False, mode="fast")`.
 
 ### scan_thorough()
 
-Thorough scan with all layers (< 100ms).
+Thorough scan with all layers (< 10ms).
 
 ```python
 def scan_thorough(

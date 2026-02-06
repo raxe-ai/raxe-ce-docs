@@ -16,7 +16,7 @@ Start here. Find your symptom, get to the solution fast.
 | "API key invalid" | Key not set or expired | [API Key Issues](#api-key-issues) |
 | Import errors | Wrong Python version or missing deps | [Dependency Issues](#dependency-issues) |
 | SIEM not receiving events | Webhook misconfigured | [SIEM Integration](#siem-integration) |
-| MCP gateway not starting | Node.js or npx issues | [MCP Gateway](#mcp-gateway) |
+| MCP gateway not starting | Configuration or upstream issues | [MCP Gateway](#mcp-gateway) |
 | `raxe: command not found` | PATH not configured | [CLI Issues](#cli-issues) |
 | Database locked errors | Multiple processes or crash | [Database Issues](#database-issues) |
 
@@ -102,7 +102,7 @@ print(f"L2 enabled: {result.l2_enabled}")
 **Prevention:**
 - Always run `raxe doctor` after installation
 - Include health check in deployment scripts
-- Monitor for `detection_count: 0` in telemetry
+- Monitor for `total_detections: 0` in telemetry
 
 ---
 
@@ -119,7 +119,7 @@ print(f"L2 enabled: {result.l2_enabled}")
 # Benchmark scan latency
 raxe scan "test prompt" --format json | jq '.scan_duration_ms'
 
-# Expected: <10ms (L1 only), <50ms (L1+L2)
+# Expected: <1ms (L1 only), <5ms (L1+L2)
 # Problem: >100ms
 
 # Check if L2 is causing slowdown
@@ -134,7 +134,7 @@ raxe scan "test" --layers l1,l2 --format json | jq '.scan_duration_ms'
 from raxe import Raxe
 
 raxe = Raxe()
-result = raxe.scan(prompt, layers=["l1"])  # L1 only: <10ms
+result = raxe.scan(prompt, layers=["l1"])  # L1 only: <1ms
 
 # Solution 2: Warm up model at startup (prevents cold start)
 raxe = Raxe()
@@ -163,6 +163,8 @@ if result.has_threats:
 ---
 
 ## False Positives
+
+<Info>For systematic false positive management, see [Suppressions](/concepts/suppressions).</Info>
 
 **Symptoms:**
 - Legitimate business text flagged as threats
@@ -406,7 +408,7 @@ print(raxe.__version__)
 
 # Test specific integration
 try:
-    from raxe.sdk.integrations import create_langchain_handler
+    from raxe import create_langchain_handler
     print("LangChain integration available")
 except ImportError as e:
     print(f"Missing: {e}")
@@ -500,55 +502,36 @@ kubectl exec -it <pod> -- curl -I https://splunk.example.com:8088
 ## MCP Gateway
 
 **Symptoms:**
-- `npx @anthropic-ai/raxe-mcp` fails to start
-- `Error: Cannot find module` errors
+- `raxe mcp gateway` fails to start
 - Gateway starts but Claude can't connect
+- Upstream MCP server not proxied
 
 **Diagnosis:**
 
 ```bash
-# Check Node.js version (18+ required)
-node --version
+# Check RAXE is installed
+raxe --version
 
-# Check npx works
-npx --version
+# Check Python version (3.10+ required)
+python --version
 
-# Check if package exists
-npm view @anthropic-ai/raxe-mcp
-
-# Try running directly
-npx @anthropic-ai/raxe-mcp --help
+# Test the MCP gateway with an upstream server
+raxe mcp gateway -u "npx @modelcontextprotocol/server-filesystem /tmp" --verbose
 ```
 
 **Solutions:**
 
-### Node.js issues
+### Gateway won't start
 
 ```bash
-# Install Node.js 18+
-# macOS with Homebrew
-brew install node@20
+# Ensure RAXE is installed
+pip install raxe
 
-# Ubuntu/Debian
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs
+# Test with verbose logging
+raxe mcp gateway -u "npx @modelcontextprotocol/server-filesystem /tmp" -v
 
-# Verify version
-node --version  # Should be 18+
-```
-
-### npx path issues
-
-```bash
-# Clear npx cache
-npx clear-npx-cache
-
-# Run with full path
-$(npm bin -g)/npx @anthropic-ai/raxe-mcp
-
-# Or install globally
-npm install -g @anthropic-ai/raxe-mcp
-raxe-mcp --help
+# Check if upstream command works on its own
+npx @modelcontextprotocol/server-filesystem /tmp
 ```
 
 ### Claude Desktop configuration
@@ -559,8 +542,8 @@ raxe-mcp --help
 {
   "mcpServers": {
     "raxe": {
-      "command": "npx",
-      "args": ["@anthropic-ai/raxe-mcp"],
+      "command": "raxe",
+      "args": ["mcp", "gateway", "-u", "npx @modelcontextprotocol/server-filesystem /tmp"],
       "env": {
         "RAXE_API_KEY": "raxe_your_key_here"
       }
@@ -569,22 +552,26 @@ raxe-mcp --help
 }
 ```
 
-### Upstream command issues
+### Testing the MCP server directly
 
 ```bash
-# Test MCP server standalone
-echo '{"jsonrpc": "2.0", "method": "initialize", "id": 1}' | \
-    npx @anthropic-ai/raxe-mcp
+# Test RAXE as an MCP tool provider
+raxe mcp serve --quiet
+
+# Test with a scan request
+(echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}'; \
+ echo '{"jsonrpc":"2.0","method":"notifications/initialized"}'; \
+ echo '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"scan_prompt","arguments":{"text":"test"}}}') | raxe mcp serve --quiet
 
 # Check logs
 export RAXE_LOG_LEVEL=DEBUG
-npx @anthropic-ai/raxe-mcp
+raxe mcp gateway -u "npx @modelcontextprotocol/server-filesystem /tmp"
 ```
 
 **Prevention:**
-- Pin Node.js version in CI/CD
 - Test MCP configuration before deploying
-- Use absolute paths in config if npx has issues
+- Use `raxe doctor` to verify installation health
+- Use absolute paths in config if PATH issues occur
 
 ---
 

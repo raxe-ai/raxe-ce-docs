@@ -57,7 +57,7 @@ Answer one question to find your integration:
     # Before
     from openai import OpenAI
     # After
-    from raxe.wrappers import RaxeOpenAI as OpenAI
+    from raxe import RaxeOpenAI as OpenAI
     ```
   </Accordion>
 
@@ -70,7 +70,7 @@ Answer one question to find your integration:
     # Before
     from anthropic import Anthropic
     # After
-    from raxe.wrappers import RaxeAnthropic as Anthropic
+    from raxe import RaxeAnthropic as Anthropic
     ```
   </Accordion>
 
@@ -189,14 +189,14 @@ Drop-in replacements for native SDKs with built-in threat detection.
   <Card title="OpenAI" icon="sparkles" href="/sdk/openai-wrapper">
     Drop-in replacement for the OpenAI Python SDK. Same API, added security.
     ```python
-    from raxe.wrappers import RaxeOpenAI
+    from raxe import RaxeOpenAI
     client = RaxeOpenAI()
     ```
   </Card>
   <Card title="Anthropic" icon="a" href="/sdk/anthropic-wrapper">
     Drop-in replacement for the Anthropic Python SDK with Claude protection.
     ```python
-    from raxe.wrappers import RaxeAnthropic
+    from raxe import RaxeAnthropic
     client = RaxeAnthropic()
     ```
   </Card>

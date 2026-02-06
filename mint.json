@@ -17,6 +17,10 @@
   },
   "topbarLinks": [
     {
+      "name": "Pricing",
+      "url": "/enterprise-contact"
+    },
+    {
       "name": "Community",
       "url": "https://join.slack.com/t/raxeai/shared_invite/zt-3kch8c9zp-A8CMJYWQjBBpzV4KNnAQcQ"
     }
@@ -60,6 +64,16 @@
       ]
     },
     {
+      "group": "How It Works",
+      "icon": "lightbulb",
+      "pages": [
+        "concepts/detection-engine",
+        "concepts/threat-families",
+        "rules/overview",
+        "concepts/architecture"
+      ]
+    },
+    {
       "group": "Protect Your AI",
       "icon": "shield-check",
       "pages": [
@@ -99,16 +113,6 @@
       ]
     },
     {
-      "group": "How It Works",
-      "icon": "lightbulb",
-      "pages": [
-        "concepts/detection-engine",
-        "concepts/threat-families",
-        "rules/overview",
-        "concepts/architecture"
-      ]
-    },
-    {
       "group": "Guides",
       "icon": "map",
       "pages": [
@@ -133,6 +137,8 @@
       "group": "Enterprise",
       "icon": "building",
       "pages": [
+        "enterprise-overview",
+        "enterprise-contact",
         "integrations/siem",
         "concepts/mssp-integration",
         "concepts/multi-tenant"

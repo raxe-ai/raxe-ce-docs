@@ -3,6 +3,8 @@ title: "Anthropic Wrapper"
 description: "Drop-in replacement for Anthropic client"
 ---
 
+<Info>New to RAXE? Start with the [Quickstart](/quickstart) and learn [how detection works](/concepts/detection-engine).</Info>
+
 ## Installation
 
 ```bash
@@ -11,7 +13,19 @@ pip install raxe[wrappers]
 
 ## Basic Usage
 
-```python
+<CardGroup cols={3}>
+  <Card title="Drop-In Replacement" icon="arrow-right-arrow-left">
+    Replace `Anthropic()` with `RaxeAnthropic()` — one line change
+  </Card>
+  <Card title="Automatic Scanning" icon="shield-check">
+    Every message scanned before reaching the model
+  </Card>
+  <Card title="Zero Latency Impact" icon="bolt">
+    Sub-millisecond L1 scanning adds negligible overhead
+  </Card>
+</CardGroup>
+
+```python title="basic.py"
 from raxe import RaxeAnthropic
 
 # Drop-in replacement for Anthropic client
@@ -19,7 +33,7 @@ client = RaxeAnthropic(api_key="sk-ant-...")
 
 # Threats automatically scanned before API call
 response = client.messages.create(
-    model="claude-3-5-sonnet-20241022",
+    model="claude-sonnet-4-20250514",
     max_tokens=1024,
     messages=[{"role": "user", "content": "What is AI?"}]
 )
@@ -35,64 +49,86 @@ print(response.content[0].text)
 4. If safe → Request forwarded to Anthropic
 5. Response returned normally
 
+```mermaid
+sequenceDiagram
+    participant App
+    participant RaxeAnthropic
+    participant RAXE Engine
+    participant Anthropic API
+
+    App->>RaxeAnthropic: messages.create(prompt)
+    RaxeAnthropic->>RAXE Engine: scan(prompt)
+    RAXE Engine-->>RaxeAnthropic: safe ✓
+    RaxeAnthropic->>Anthropic API: messages.create(prompt)
+    Anthropic API-->>App: response
+```
+
 ## Error Handling
 
-```python
-from raxe import RaxeAnthropic, RaxeBlockedError
+```python title="error_handling.py"
+from raxe import RaxeAnthropic, RaxeBlockedError, RaxeException
 
 client = RaxeAnthropic(api_key="sk-ant-...")
 
 try:
     response = client.messages.create(
-        model="claude-3-5-sonnet-20241022",
+        model="claude-sonnet-4-20250514",
         max_tokens=1024,
         messages=[{"role": "user", "content": user_input}]
     )
     return response.content[0].text
 
 except RaxeBlockedError as e:
+    # Threat was detected and blocked before API call
     print(f"Blocked: {e.severity}")
+    print(f"Rule: {e.rule_id}")
     return "Your request was blocked for security reasons."
+
+except RaxeException as e:
+    # Other RAXE errors (config, initialization)
+    logger.error(f"RAXE error: {e}")
+    # Decide: fail open or fail closed
 ```
 
 ## Configuration
 
-```python
+```python title="config.py"
 from raxe import RaxeAnthropic
 
 client = RaxeAnthropic(
     api_key="sk-ant-...",
 
     # RAXE configuration
-    raxe_l1_enabled=True,
-    raxe_l2_enabled=True,
-    raxe_block_on_threat=True,
+    raxe_l1_enabled=True,        # Enable rule-based detection (515+ patterns)
+    raxe_l2_enabled=True,        # Enable ML detection (neural classifier)
+    raxe_block_on_threat=True,   # Raise RaxeBlockedError on threat detection
 )
 ```
 
 ## Streaming Support
 
-```python
+```python title="streaming.py"
 from raxe import RaxeAnthropic
 
 client = RaxeAnthropic(api_key="sk-ant-...")
 
+# Streaming works normally - prompt scanned before stream starts
 with client.messages.stream(
-    model="claude-3-5-sonnet-20241022",
+    model="claude-sonnet-4-20250514",
     max_tokens=1024,
-    messages=[{"role": "user", "content": "Tell me a story"}]
+    messages=[{"role": "user", "content": user_input}]
 ) as stream:
     for text in stream.text_stream:
-        print(text, end="")
+        print(text, end="", flush=True)
 ```
 
 ## System Prompts
 
 System prompts are also scanned:
 
-```python
+```python title="system_prompts.py"
 response = client.messages.create(
-    model="claude-3-5-sonnet-20241022",
+    model="claude-sonnet-4-20250514",
     max_tokens=1024,
     system="You are a helpful assistant",  # Scanned
     messages=[
@@ -101,30 +137,59 @@ response = client.messages.create(
 )
 ```
 
+## All Messages Scanned
+
+The wrapper scans **all messages** in the conversation:
+
+```python title="multi_turn.py"
+response = client.messages.create(
+    model="claude-sonnet-4-20250514",
+    max_tokens=1024,
+    messages=[
+        {"role": "user", "content": "What is AI?"},        # Scanned
+        {"role": "assistant", "content": "AI is..."},      # Scanned
+        {"role": "user", "content": "Tell me more"}        # Scanned
+    ]
+)
+# All messages combined and scanned for threats
+```
+
 ## Migration Guide
 
-```python
-# Before
+```python title="migration.py"
+# Before - standard Anthropic client
 from anthropic import Anthropic
 client = Anthropic(api_key="sk-ant-...")
 
-# After (one-line change)
+# After - one import change, full protection
 from raxe import RaxeAnthropic
 client = RaxeAnthropic(api_key="sk-ant-...")
 
-# Everything else stays the same!
+# Everything else stays the same - full API compatibility!
 ```
 
 ## Async Support
 
-```python
+```python title="async.py"
 from raxe import AsyncRaxeAnthropic
 
+# Async client for high-throughput applications
 client = AsyncRaxeAnthropic(api_key="sk-ant-...")
 
 response = await client.messages.create(
-    model="claude-3-5-sonnet-20241022",
+    model="claude-sonnet-4-20250514",
     max_tokens=1024,
     messages=[{"role": "user", "content": "Hello"}]
 )
 ```
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Production Checklist" icon="list-check" href="/guides/production-checklist">
+    Deploy RAXE safely to production
+  </Card>
+  <Card title="Async SDK" icon="bolt" href="/sdk/async">
+    High-throughput scanning with async support
+  </Card>
+</CardGroup>

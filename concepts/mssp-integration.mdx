@@ -127,7 +127,7 @@ You should see a test event arrive at your webhook endpoint.
 ### SDK Alternative
 
 ```python
-from raxe.sdk.partner import create_partner_client
+from raxe import create_partner_client
 
 # Initialize client
 client = create_partner_client("mssp_yourcompany")
@@ -232,8 +232,8 @@ raxe agent unregister <agent_id> [--force]
 
     "l1": {
       "hit": true,
-      "detection_count": 3,
-      "highest_severity": "critical"
+      "total_detections": 3,
+      "severity": "critical"
     }
   }
 }
@@ -274,8 +274,7 @@ Forward events to enterprise SIEMs in native formats:
 <Tabs>
   <Tab title="Splunk">
 ```python
-from raxe.domain.siem.config import SIEMConfig, SIEMType
-from raxe.infrastructure.siem import create_siem_adapter
+from raxe import SIEMConfig, SIEMType, create_siem_adapter
 
 splunk = create_siem_adapter(SIEMConfig(
     siem_type=SIEMType.SPLUNK,
@@ -409,7 +408,7 @@ raxe customer configure cust_acme --mssp mssp_yourcompany \
 Track all data transmissions for compliance:
 
 ```python
-from raxe.infrastructure.audit.mssp_audit_logger import MSSPAuditLogger, MSSPAuditLoggerConfig
+from raxe import MSSPAuditLogger, MSSPAuditLoggerConfig
 
 logger = MSSPAuditLogger(MSSPAuditLoggerConfig(
     log_directory="/var/log/raxe/audit"

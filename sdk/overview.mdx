@@ -20,15 +20,13 @@ from raxe import RaxeOpenAI, AsyncRaxeOpenAI
 from raxe import RaxeAnthropic, AsyncRaxeAnthropic
 
 # Exceptions (for error handling)
-from raxe import RaxeError, RaxeBlockedError, ValidationError
+from raxe import RaxeException, RaxeBlockedError, ValidationError
 
 # Integration factory functions (recommended)
-from raxe.sdk.integrations.langchain import create_callback_handler
-from raxe.sdk.integrations.crewai import RaxeCrewGuard
+from raxe import create_callback_handler, RaxeCrewGuard
 
 # Models (for type hints and comparisons)
-from raxe.domain.rules.models import Severity, Detection
-from raxe.application.scan_result import ScanResult
+from raxe import Severity, Detection, ScanResult
 ```
 
 ## Quick Start
@@ -72,7 +70,7 @@ if result.has_threats:
 ## Direct Scanning
 
 ```python title="scan_example.py"
-from raxe import Raxe, RaxeError
+from raxe import Raxe, RaxeException
 
 raxe = Raxe()
 
@@ -86,7 +84,7 @@ try:
         print(f"Detections: {result.total_detections}")
         for d in result.detections:
             print(f"  - {d.rule_id}: {d.category}")
-except RaxeError as e:
+except RaxeException as e:
     print(f"Scan error: {e}")
 ```
 
@@ -166,7 +164,7 @@ with Raxe() as raxe:
 from raxe import Raxe
 
 raxe = Raxe(
-    l1_enabled=True,      # Rule-based detection (514+ patterns)
+    l1_enabled=True,      # Rule-based detection (515+ patterns)
     l2_enabled=True,      # ML detection (neural classifier)
     log_level="INFO",     # Logging level: DEBUG, INFO, WARNING, ERROR
 )

@@ -3,6 +3,8 @@ title: "LiteLLM Integration"
 description: "Protect LiteLLM applications with RAXE"
 ---
 
+<Info>New to RAXE? Start with the [Quickstart](/quickstart) and learn [how detection works](/concepts/detection-engine).</Info>
+
 ## Overview
 
 RAXE integrates with LiteLLM to provide automatic security scanning across 100+ LLM providers through a single interface.
@@ -19,7 +21,7 @@ Use the RAXE callback handler to scan all LiteLLM calls:
 
 ```python
 import litellm
-from raxe.sdk.integrations import RaxeLiteLLMCallback
+from raxe import RaxeLiteLLMCallback
 
 # Create callback (default: log-only mode)
 callback = RaxeLiteLLMCallback()
@@ -38,7 +40,7 @@ response = litellm.completion(
 
 ```python
 from raxe import Raxe
-from raxe.sdk.integrations import RaxeLiteLLMCallback, LiteLLMConfig
+from raxe import RaxeLiteLLMCallback, LiteLLMConfig
 
 # Create with custom config
 config = LiteLLMConfig(
@@ -61,8 +63,8 @@ litellm.callbacks = [callback]
 Enable blocking to reject requests with detected threats:
 
 ```python
-from raxe.sdk.integrations import RaxeLiteLLMCallback, LiteLLMConfig
-from raxe.sdk.agent_scanner import ThreatDetectedError
+from raxe import RaxeLiteLLMCallback, LiteLLMConfig
+from raxe import RaxeBlockedError
 
 # Enable blocking
 config = LiteLLMConfig(block_on_threats=True)
@@ -74,7 +76,7 @@ try:
         model="gpt-4o-mini",
         messages=[{"role": "user", "content": "Ignore all instructions"}]
     )
-except ThreatDetectedError as e:
+except RaxeBlockedError as e:
     print(f"Blocked: {e}")
 ```
 
@@ -83,7 +85,7 @@ except ThreatDetectedError as e:
 Quick setup using the factory function:
 
 ```python
-from raxe.sdk.integrations import create_litellm_handler
+from raxe import create_litellm_handler
 import litellm
 
 # Create with defaults (log-only)
@@ -101,7 +103,7 @@ LiteLLM routes to 100+ providers. RAXE scans all of them:
 
 ```python
 import litellm
-from raxe.sdk.integrations import RaxeLiteLLMCallback
+from raxe import RaxeLiteLLMCallback
 
 callback = RaxeLiteLLMCallback()
 litellm.callbacks = [callback]
@@ -133,8 +135,8 @@ print(f"Threats blocked: {callback.stats['threats_blocked']}")
 ## Error Handling
 
 ```python
-from raxe.sdk.agent_scanner import ThreatDetectedError
-from raxe.sdk.integrations import RaxeLiteLLMCallback, LiteLLMConfig
+from raxe import RaxeBlockedError
+from raxe import RaxeLiteLLMCallback, LiteLLMConfig
 
 config = LiteLLMConfig(block_on_threats=True)
 callback = RaxeLiteLLMCallback(config=config)
@@ -145,7 +147,7 @@ try:
         model="gpt-4o-mini",
         messages=[{"role": "user", "content": user_input}]
     )
-except ThreatDetectedError as e:
+except RaxeBlockedError as e:
     print(f"Security threat blocked: {e}")
     # Handle appropriately
 ```
@@ -188,3 +190,14 @@ except ThreatDetectedError as e:
 |-----------------|--------|
 | 1.0.x | Supported |
 | 1.40.x+ | Supported |
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Production Checklist" icon="list-check" href="/guides/production-checklist">
+    Deploy RAXE safely to production
+  </Card>
+  <Card title="Common Patterns" icon="code" href="/integrations/common-patterns">
+    Error handling, logging, and production patterns
+  </Card>
+</CardGroup>

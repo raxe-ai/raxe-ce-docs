@@ -44,7 +44,7 @@ RAXE is designed for production workloads with sub-millisecond latency and high 
 | Component | Memory |
 |-----------|--------|
 | Base SDK | ~20MB |
-| L1 Rules (514) | ~10MB |
+| L1 Rules (515+) | ~10MB |
 | L2 ML Model | ~30MB |
 | **Total Peak** | **~60MB** |
 
@@ -303,7 +303,7 @@ print(f"Throughput: {len(prompts)/elapsed:.0f}/sec")
 
 RAXE is designed to avoid performance regressions:
 
-- **No catastrophic backtracking**: All 514 regex patterns are REDOS-safe
+- **No catastrophic backtracking**: All 515+ regex patterns are REDOS-safe
 - **Bounded memory**: Fixed-size buffers, no unbounded allocations
 - **Timeouts**: Configurable scan timeouts prevent runaway processing
 - **Circuit breaker**: Graceful degradation under extreme load
@@ -312,3 +312,14 @@ RAXE is designed to avoid performance regressions:
 # Configure timeout
 result = raxe.scan("text", timeout=5.0)  # 5 second max
 ```
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Configuration" icon="gear" href="/configuration">
+    Tune performance settings
+  </Card>
+  <Card title="Async SDK" icon="bolt" href="/sdk/async">
+    High-throughput async scanning
+  </Card>
+</CardGroup>
