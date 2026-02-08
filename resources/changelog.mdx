@@ -3,6 +3,54 @@ title: "Changelog"
 description: "What's new in RAXE Community Edition"
 ---
 
+## v0.10.2 - February 8, 2026
+
+### CLI Phase 2: Output Quality & Performance
+
+Major CLI improvements for production workflows, scripting, and enterprise integrations.
+
+<CardGroup cols={2}>
+  <Card title="Clean Output Formats" icon="code">
+    JSON, YAML, and table output with no ANSI leakage
+  </Card>
+  <Card title="Shell Completion" icon="terminal">
+    Dynamic completions for bash, zsh, and fish (36+ commands)
+  </Card>
+  <Card title="Faster Startup" icon="bolt">
+    Non-scan commands 10x faster via lazy ML loading
+  </Card>
+  <Card title="MCP Status" icon="circle-check">
+    New `raxe mcp status` for integration diagnostics
+  </Card>
+</CardGroup>
+
+#### Added
+
+- **Shell Completion** - `raxe completion bash|zsh|fish` with dynamic command discovery
+- **Table Output** - `raxe scan --format table` for summary views
+- **YAML Output** - `raxe scan --format yaml` for structured output
+- **MCP Status** - `raxe mcp status` with JSON output for integration diagnostics
+- **`--json` flag** - Shorthand on enterprise commands (mssp, customer, agent, policy, tenant, app)
+- **`--quiet` flag** - Suppress banners and decorative output on all commands
+- **`--no-color` flag** - Disable rich formatting (auto-detected when piping)
+- **SIEM Option Grouping** - `raxe customer siem configure --help` shows grouped options
+
+#### Changed
+
+- **Lazy L2 Loading** - Non-scan commands (`doctor`, `rules list`, `stats`) skip ONNX model loading (~0.5s vs ~3s startup)
+- **Telemetry Flush** - Eliminated duplicate flush on exit (saves up to 2s)
+- **Progress Display** - Removed artificial 500ms sleep after completion
+- **Model Display** - ML model names formatted for readability (e.g., "Gemma Threat Classifier (compact)")
+
+#### Fixed
+
+- **ANSI Leakage** - JSON output no longer contains escape codes when piped
+- **Exit Codes** - Threat detected correctly returns exit code 1
+- **Quiet Mode** - `--quiet` properly suppresses output on all subcommands
+- **Doctor Performance** - `raxe doctor --quiet` skips performance benchmark (10s to 2.5s)
+
+---
+
 ## v0.9.1 - February 3, 2026
 
 ### MSSP/Partner Ecosystem

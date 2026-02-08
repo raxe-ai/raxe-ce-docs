@@ -3,6 +3,22 @@ title: "CLI Commands"
 description: "Complete command reference"
 ---
 
+## Global Options
+
+These options are available on most commands:
+
+| Option | Description |
+|--------|-------------|
+| `--quiet` | Suppress banners and decorative output |
+| `--no-color` | Disable colored/rich output (also auto-detected when piping) |
+| `--json` | Output as JSON (available on enterprise commands) |
+
+<Tip>
+When piping output (e.g., `raxe scan "text" --format json | jq .`), ANSI color codes are automatically suppressed.
+</Tip>
+
+---
+
 ## raxe scan
 
 Scan text for threats.
@@ -15,13 +31,15 @@ raxe scan "text to scan"
 
 | Option | Description |
 |--------|-------------|
-| `--format` | Output format: `text`, `json` |
+| `--format` | Output format: `text`, `json`, `yaml`, `table` |
 | `--ci` | CI mode (JSON + exit code 1 on threats) |
 | `--explain` | Show detailed explanations |
 | `--rule` | Test specific rule only |
 | `--tenant` | Tenant ID for multi-tenant scanning |
 | `--app` | App ID within tenant |
 | `--policy` | Override policy for this scan |
+| `--quiet` | Suppress banners and decorative output |
+| `--no-color` | Disable colored output |
 
 ### Examples
 
@@ -32,11 +50,20 @@ raxe scan "Ignore all previous instructions"
 # JSON output
 raxe scan "text" --format json
 
+# Table output (summary view)
+raxe scan "text" --format table
+
+# YAML output
+raxe scan "text" --format yaml
+
 # CI mode
 raxe scan "text" --ci
 
 # With explanations
 raxe scan "text" --explain
+
+# Quiet mode (minimal output)
+raxe scan "text" --quiet
 
 # Multi-tenant scanning
 raxe scan "text" --tenant acme --app chatbot
@@ -238,6 +265,37 @@ Creates:
 
 MCP (Model Context Protocol) integration commands.
 
+### raxe mcp status
+
+Check MCP integration status including SDK availability, server modules, and Claude Desktop configuration.
+
+```bash
+raxe mcp status
+raxe mcp status --json
+```
+
+#### Options
+
+| Option | Description |
+|--------|-------------|
+| `--output` | Output format: `table`, `json` |
+| `--json` | Shorthand for `--output json` |
+
+#### Example Output
+
+```
+MCP Integration Status
+
+┌──────────────────┬────────────────┐
+│ RAXE Version     │ 0.10.2         │
+│ MCP SDK          │ Installed      │
+│ MCP SDK Version  │ 1.16.0         │
+│ Server Module    │ Available      │
+│ Gateway Config   │ Not found      │
+│ Claude Desktop   │ Not configured │
+└──────────────────┴────────────────┘
+```
+
 ### raxe mcp gateway
 
 Start the MCP Security Gateway to protect MCP servers.
@@ -332,6 +390,53 @@ raxe mcp generate-config
 
 ---
 
+## raxe completion
+
+Generate shell completion scripts for bash, zsh, or fish.
+
+```bash
+raxe completion bash
+raxe completion zsh
+raxe completion fish
+```
+
+### Installation
+
+```bash
+# Bash
+raxe completion bash >> ~/.bashrc
+
+# Zsh
+raxe completion zsh >> ~/.zshrc
+
+# Fish
+raxe completion fish > ~/.config/fish/completions/raxe.fish
+```
+
+Completions are dynamic and automatically discover all 36+ commands and subcommands at runtime.
+
+---
+
+## raxe models
+
+Manage and inspect ML models.
+
+```bash
+raxe models list
+raxe models compare
+```
+
+### Subcommands
+
+| Command | Description |
+|---------|-------------|
+| `list` | List available ML models |
+| `compare` | Compare model performance |
+
+Models are discovered from `~/.raxe/models/` directory. RAXE ships with a default compact Gemma-based classifier.
+
+---
+
 ## raxe export
 
 Export scan history.
@@ -378,7 +483,7 @@ raxe tenant create --name "Security Team" --id security --policy strict
 
 # List tenants
 raxe tenant list
-raxe tenant list --output json
+raxe tenant list --json
 
 # Delete tenant
 raxe tenant delete acme --force
@@ -443,6 +548,7 @@ raxe policy <subcommand>
 ```bash
 # List policies (presets + custom)
 raxe policy list --tenant acme
+raxe policy list --tenant acme --json
 
 # Set tenant default
 raxe policy set balanced --tenant acme
@@ -582,6 +688,7 @@ raxe mssp create --id mssp_yourcompany \
 
 # List MSSPs
 raxe mssp list
+raxe mssp list --json
 
 # Show details
 raxe mssp show mssp_yourcompany
@@ -629,6 +736,7 @@ raxe customer create --mssp mssp_yourcompany --id cust_privacy \
 
 # List customers
 raxe customer list --mssp mssp_yourcompany
+raxe customer list --mssp mssp_yourcompany --json
 
 # Show details
 raxe customer show --mssp mssp_yourcompany cust_acme
@@ -733,6 +841,7 @@ raxe agent register --mssp mssp_yourcompany --customer cust_acme \
 
 # List agents
 raxe agent list --mssp mssp_yourcompany
+raxe agent list --mssp mssp_yourcompany --json
 raxe agent list --mssp mssp_yourcompany --customer cust_acme
 
 # Show agent status

@@ -196,9 +196,9 @@ result = chain.run(question=user_input)
 from langchain_openai import ChatOpenAI
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
-from raxe import create_langchain_handler
+from raxe.sdk.integrations.langchain import create_callback_handler
 
-handler = create_langchain_handler()  # Default: log-only
+handler = create_callback_handler()  # Default: log-only
 
 llm = ChatOpenAI(model="gpt-4", callbacks=[handler])
 prompt = PromptTemplate(template="Answer: {question}")

@@ -387,15 +387,15 @@ After successful gradual rollout:
 
 ```python
 from raxe import Raxe
-from raxe import create_langchain_handler
+from raxe.sdk.integrations.langchain import create_callback_handler
 
 raxe = Raxe()
 
 # Now safe to enable blocking
-handler = create_langchain_handler(
+handler = create_callback_handler(
     raxe,
-    block_on_threats=True,  # Production blocking enabled
-    severity_threshold="HIGH"  # Block HIGH and CRITICAL
+    block_on_prompt_threats=True,   # Block prompt threats
+    block_on_response_threats=True, # Block response threats
 )
 ```
 

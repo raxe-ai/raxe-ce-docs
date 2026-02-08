@@ -489,11 +489,11 @@ RAXE includes a test server script for local webhook development:
 python scripts/webhook_test_server.py --port 9001 --secret my_secret
 
 # In another terminal, configure and test
-raxe mssp create --id test_mssp --name "Test" \
+raxe mssp create --id mssp_test --name "Test" \
     --webhook-url https://127.0.0.1:9001/raxe/alerts \
     --webhook-secret my_secret
 
-RAXE_SKIP_SSL_VERIFY=true raxe mssp test-webhook test_mssp
+RAXE_SKIP_SSL_VERIFY=true raxe mssp test-webhook mssp_test
 ```
 
 The test server displays:

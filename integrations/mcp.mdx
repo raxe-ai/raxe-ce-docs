@@ -313,6 +313,21 @@ raxe mcp audit ~/.config/claude/claude_desktop_config.json --json
 
 ## CLI Reference
 
+### raxe mcp status
+
+Check MCP integration status.
+
+```bash
+raxe mcp status [OPTIONS]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--output [table\|json]` | Output format (default: table) |
+| `--json` | Shorthand for `--output json` |
+
+Shows: RAXE version, MCP SDK installation, server module availability, gateway config detection, and Claude Desktop configuration status.
+
 ### raxe mcp gateway
 
 Start the MCP Security Gateway.
@@ -571,7 +586,8 @@ raxe mcp gateway -u "npx @modelcontextprotocol/server-filesystem /tmp" -v
 
 | Metric | Target |
 |--------|--------|
-| Startup time | ~5s (loading 515+ rules) |
+| Startup time (with ML) | ~3s (rules + ONNX model) |
+| Startup time (no ML) | ~0.5s (rules only) |
 | L1 scan latency | <1ms |
 | L1+L2 scan latency | <5ms |
 | Gateway overhead | <2ms per request |

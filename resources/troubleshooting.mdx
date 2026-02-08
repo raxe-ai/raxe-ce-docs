@@ -408,7 +408,7 @@ print(raxe.__version__)
 
 # Test specific integration
 try:
-    from raxe import create_langchain_handler
+    from raxe.sdk.integrations.langchain import create_callback_handler
     print("LangChain integration available")
 except ImportError as e:
     print(f"Missing: {e}")

@@ -312,6 +312,7 @@ adapter = create_siem_adapter(SIEMConfig(
 raxe customer siem configure cust_acme --mssp mssp_partner \
     --type cef \
     --url syslog://siem.company.com \
+    --token "not-used" \
     --transport udp \
     --port 514
 ```
@@ -336,6 +337,7 @@ adapter = create_siem_adapter(SIEMConfig(
 raxe customer siem configure cust_acme --mssp mssp_partner \
     --type cef \
     --url syslog://siem.company.com \
+    --token "not-used" \
     --transport tcp \
     --port 6514 \
     --tls

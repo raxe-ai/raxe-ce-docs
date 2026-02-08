@@ -186,9 +186,9 @@ raxe init
 
 ```python Protect an Agent
 from raxe import Raxe
-from raxe import create_langchain_handler
+from raxe.sdk.integrations.langchain import create_callback_handler
 
-handler = create_langchain_handler()
+handler = create_callback_handler()
 # Add to any LangChain agent
 agent = create_react_agent(llm, tools, callbacks=[handler])
 ```

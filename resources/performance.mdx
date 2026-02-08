@@ -170,6 +170,28 @@ def init_raxe():
     return raxe
 ```
 
+### 6. Lazy L2 Loading
+
+When you only need rules (no ML scanning), disable L2 to skip ONNX model loading entirely:
+
+```python
+# Skip ML model loading (~2-3s faster startup)
+raxe = Raxe(l2_enabled=False)
+```
+
+CLI commands like `raxe rules list` and `raxe doctor` automatically skip ML loading when it's not needed, keeping non-scan commands fast (~0.5s startup).
+
+---
+
+## CLI Startup Time
+
+| Command Type | Startup Time | Notes |
+|-------------|-------------|-------|
+| Non-scan (`doctor`, `rules list`, `stats`) | ~0.5s | L2 model skipped |
+| Scan (`scan`, `batch`, `repl`) | ~3s | Includes ONNX model loading |
+
+RAXE uses lazy L2 loading: the ML model is only loaded when scanning is required. Non-scan commands skip model initialization entirely.
+
 ---
 
 ## Latency Breakdown
