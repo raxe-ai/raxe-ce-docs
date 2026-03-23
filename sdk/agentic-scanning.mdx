@@ -28,7 +28,8 @@ config = AgentScannerConfig(
     scan_prompts=True,
     scan_responses=True,
     scan_tool_calls=True,
-    on_threat="log",  # "log" or "block"
+    on_threat="log",        # "log" or "block"
+    execution_mode="sync",  # "sync" or "background"
 )
 
 scanner = create_agent_scanner(raxe, config, integration_type="custom")

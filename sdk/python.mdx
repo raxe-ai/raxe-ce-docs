@@ -96,6 +96,44 @@ raxe = Raxe(
 )
 ```
 
+## Background Scanning
+
+For latency-sensitive applications (FastAPI, real-time APIs), use background scan mode. The scan runs asynchronously on a worker thread -- your code continues immediately with ~0ms overhead.
+
+```python title="background_mode.py"
+from raxe import Raxe
+from raxe.sdk.agent_scanner import AgentScannerConfig, create_agent_scanner
+
+raxe = Raxe()
+scanner = create_agent_scanner(
+    raxe,
+    AgentScannerConfig(
+        on_threat="log",
+        execution_mode="background",
+        on_threat_callback=lambda r: print(
+            f"Threat: severity={r.severity}, hash={r.prompt_hash}"
+        ),
+    ),
+)
+
+# Returns in <1ms — scan runs in background
+scanner.scan_prompt("user input")
+
+# Your code continues immediately
+result = call_llm(prompt)
+```
+
+### Execution Modes
+
+| Mode | Overhead | Threat Result | Use Case |
+|------|----------|---------------|----------|
+| `"sync"` (default) | ~5-200ms | Inline | When you need to block on threats |
+| `"background"` | ~0ms | Via callback | Log-only monitoring, latency-sensitive apps |
+
+<Note>
+Background mode is incompatible with `on_threat="block"`. If both are set, RAXE auto-corrects to sync mode with a warning.
+</Note>
+
 ## Decorator Pattern
 
 Protect functions automatically:

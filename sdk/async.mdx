@@ -120,20 +120,26 @@ async def scan_stream(prompts):
 ## Performance Tuning
 
 ```python
-from raxe import AsyncRaxe
+from raxe import Raxe
+from raxe.sdk.agent_scanner import AgentScannerConfig, create_agent_scanner
 
-# For high-throughput scenarios
-raxe = AsyncRaxe(
-    l1_enabled=True,
-    l2_enabled=False,  # Skip ML for speed
-    performance_mode="fast"
+# Option 1: Background mode (non-blocking, recommended for async apps)
+raxe = Raxe()
+scanner = create_agent_scanner(
+    raxe,
+    AgentScannerConfig(
+        execution_mode="background",  # Returns in <1ms
+        on_threat="log",
+    ),
 )
+scanner.scan_prompt(text)  # Fire-and-forget
 
-# Batch with higher concurrency
-results = await raxe.scan_batch(
-    prompts,
-    max_concurrency=20  # Adjust based on your system
-)
+# Option 2: L1-only for fast inline results
+raxe = Raxe(l2_enabled=False)  # ~5-15ms per scan
+result = raxe.scan(text)
+
+# Option 3: scan_fast() convenience method
+result = raxe.scan_fast(text)  # L1-only, ~5-15ms
 ```
 
 ## Error Handling
